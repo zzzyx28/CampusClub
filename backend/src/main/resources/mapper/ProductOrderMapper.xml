@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.backend.dao.mapper.ProductOrderMapper">
+
+    <resultMap id="ProductOrderDetailResultMap" type="com.backend.vo.ProductOrderDetail">
+        <result property="orderId" column="order_id"/>
+        <result property="sku" column="sku"/>
+        <result property="specOption" column="spec_option"/>
+        <result property="quantity" column="quantity"/>
+        <result property="unitPrice" column="unit_price"/>
+        <result property="totalPrice" column="total_price"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="realName" column="real_name"/>
+        <result property="phone" column="phone"/>
+
+        <result property="productId" column="product_id"/>
+        <result property="spu" column="spu"/>
+        <result property="productName" column="product_name"/>
+        <result property="category" column="category"/>
+        <result property="brand" column="brand"/>
+    </resultMap>
+
+    <select id="getOrderDetailById" resultMap="ProductOrderDetailResultMap" parameterType="long">
+        SELECT
+            o.id AS order_id,
+            s.sku,
+            s.spec_option,
+            o.quantity,
+            o.unit_price,
+            o.total_price,
+            o.status,
+            o.created_at,
+
+            u.id AS user_id,
+            u.username,
+            u.real_name,
+            u.phone,
+
+            p.id AS product_id,
+            p.spu,
+            p.name AS product_name,
+            p.category,
+            p.brand
+        FROM product_order o
+                 JOIN `user` u ON o.user_id = u.id
+                 JOIN product p ON o.product_id = p.id
+                 JOIN product_sku s ON o.product_sku_id = s.id
+        WHERE o.id = #{orderId}
+    </select>
+
+</mapper>

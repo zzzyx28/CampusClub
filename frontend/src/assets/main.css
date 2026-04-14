@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
+
+/* SmartShop 设计令牌 — 电商客服：专业、可信、清爽 */
+:root {
+  --sa-primary: #1e3a8a;
+  --sa-primary-bright: #2563eb;
+  --sa-secondary: #3b82f6;
+  --sa-cta: #f97316;
+  --sa-bg: #eff6ff;
+  --sa-bg-elevated: #f8fafc;
+  --sa-surface: #ffffff;
+  --sa-text: #0f172a;
+  --sa-text-muted: #475569;
+  --sa-border: #e2e8f0;
+  --sa-header-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 52%, #1d4ed8 100%);
+  --sa-radius-lg: 16px;
+  --sa-radius-md: 12px;
+  --sa-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --sa-shadow-md: 0 10px 40px rgba(15, 23, 42, 0.08);
+  --sa-shadow-card: 0 4px 24px rgba(30, 58, 138, 0.07);
+  --sa-font-heading: 'Poppins', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --sa-font-body: 'Open Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --sa-transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease, opacity 0.2s ease;
+
+  /* Element Plus主色与派生（在 ep 样式之后由本文件覆盖） */
+  --el-color-primary: #2563eb;
+  --el-color-primary-light-3: #60a5fa;
+  --el-color-primary-light-5: #93c5fd;
+  --el-color-primary-light-7: #bfdbfe;
+  --el-color-primary-light-8: #dbeafe;
+  --el-color-primary-light-9: #eff6ff;
+  --el-color-primary-dark-2: #1d4ed8;
+  --el-border-radius-base: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--sa-font-body);
+  font-size: 15px;
+  color: var(--sa-text);
+  background-color: var(--sa-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--sa-font-heading);
+  font-weight: 600;
+  color: var(--sa-text);
+  letter-spacing: -0.02em;
+}
+
+a {
+  text-decoration: none;
+  color: var(--sa-primary-bright);
+  transition: var(--sa-transition);
+}
+
+a:hover {
+  color: var(--sa-primary);
+}
+
+/* 全局卡片与表格轻量统一 */
+.el-card {
+  border-radius: var(--sa-radius-md) !important;
+  border: 1px solid var(--sa-border) !important;
+  box-shadow: var(--sa-shadow-sm) !important;
+}
+
+.el-button {
+  font-weight: 600;
+  transition: var(--sa-transition);
+}
+
+.el-button--primary {
+  --el-button-hover-bg-color: #1d4ed8;
+  --el-button-hover-border-color: #1d4ed8;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #94a3b8;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #64748b;
+}
+
+::-webkit-scrollbar-track {
+  background-color: rgba(226, 232, 240, 0.6);
+}
+
+@media (min-width: 1024px) {
+  body {
+    display: block;
+  }
+
+  #app {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+  }
+}
