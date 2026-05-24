@@ -334,11 +334,11 @@ const getUserTypeName = (userType) => {
 const getMemberLevelName = (level) => {
   switch (level) {
     case 0: return '无';
-    case 1: return '普通会员';
-    case 2: return '白银会员';
-    case 3: return '黄金会员';
-    case 4: return '白金会员';
-    case 5: return '钻石会员';
+    case 1: return '新成员';
+    case 2: return '活跃';
+    case 3: return '骨干';
+    case 4: return '核心';
+    case 5: return '荣誉';
     default: return '未知';
   }
 };
@@ -406,7 +406,7 @@ onMounted(() => {
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="memberLevel" label="会员等级" min-width="100">
+      <el-table-column prop="memberLevel" label="社团活跃度" min-width="100">
         <template #default="scope">
           <span v-if="scope.row.userType === 1">{{ getMemberLevelName(scope.row.memberLevel) }}</span>
           <span v-else>-</span>
@@ -503,14 +503,14 @@ onMounted(() => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="会员等级" v-if="userForm.userType === 1">
-          <el-select v-model="userForm.memberLevel" placeholder="请选择会员等级">
+        <el-form-item label="社团活跃度" v-if="userForm.userType === 1">
+          <el-select v-model="userForm.memberLevel" placeholder="请选择活跃度">
             <el-option :label="'无'" :value="0" />
-            <el-option :label="'普通会员'" :value="1" />
-            <el-option :label="'白银会员'" :value="2" />
-            <el-option :label="'黄金会员'" :value="3" />
-            <el-option :label="'白金会员'" :value="4" />
-            <el-option :label="'钻石会员'" :value="5" />
+            <el-option :label="'新成员'" :value="1" />
+            <el-option :label="'活跃'" :value="2" />
+            <el-option :label="'骨干'" :value="3" />
+            <el-option :label="'核心'" :value="4" />
+            <el-option :label="'荣誉'" :value="5" />
           </el-select>
         </el-form-item>
       </el-form>

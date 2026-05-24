@@ -10,11 +10,11 @@ const filteredKnowledge = ref([]);
 
 // 分类选项
 const categories = [
-  { id: 1, name: '商品与订单政策' },
-  { id: 2, name: '退改政策' },
-  { id: 3, name: '会员服务' },
-  { id: 4, name: '购票指南' },
-  { id: 5, name: '行李规定' }
+  { id: 1, name: '活动与报名政策' },
+  { id: 2, name: '取消与退票' },
+  { id: 3, name: '社团服务' },
+  { id: 4, name: '活动指南' },
+  { id: 5, name: '身份核验' }
 ];
 
 // 选中的分类

@@ -6,11 +6,11 @@ import HeaderNav from '@/components/common/HeaderNav.vue';
 import SideMenu from '@/components/common/SideMenu.vue';
 import CustomerList from '@/components/service/CustomerList.vue';
 import ChatBox from '@/components/chat/ChatBox.vue';
-import { conversationApi, orderApi, userApi } from '@/api';
+import { conversationApi, registrationApi, userApi } from '@/api';
 import { parseJwt } from '@/utils/jwt';
 
 const router = useRouter();
-const username = ref('客服名称');
+const username = ref('社团助手');
 const activeMenu = ref('customers');
 const message = ref('');
 const currentChat = ref(null);
@@ -22,38 +22,38 @@ let pollTimer = null;
 // 侧边栏菜单项
 const menuItems = [
   { index: 'customers', title: '客户信息', icon: 'User' },
-  { index: 'orders', title: '订单管理', icon: 'Ticket' }
+  { index: 'registrations', title: '报名管理', icon: 'Ticket' }
 ];
 
 // 客户会话列表
 const customers = ref([]);
 
-// 订单列表
-const orders = ref([]);
+// 报名列表
+const registrations = ref([]);
 
-// 订单详情数据
-const orderDetail = reactive({
-  orderId: '',
-  specOption: '',
+const registrationDetail = reactive({
+  registrationId: '',
+  tierName: '',
   status: 0,
   createdAt: '',
   userId: '',
   username: '',
   realName: '',
   phone: '',
-  productId: '',
-  sku: '',
-  productName: '',
-  category: '',
-  shipFrom: '',
-  availableFrom: '',
-  shipBy: '',
-  brand: '',
-  spec: '',
-  price: 0
+  activityId: '',
+  ticketCode: '',
+  activityTitle: '',
+  activityType: '',
+  clubName: '',
+  venue: '',
+  registrationStart: '',
+  eventStart: '',
+  eventEnd: '',
+  unitPrice: 0,
+  totalPrice: 0
 });
 
-// 订单详情弹窗控制
+// 报名详情弹窗控制
 const detailDialogVisible = ref(false);
 const detailLoading = ref(false);
 
@@ -199,18 +199,16 @@ const selectCustomer = async (customer) => {
           customer.userInfo = userInfoResponse.data;
         }
 
-        // 获取该用户的订单数据
-        const ordersResponse = await orderApi.listOrdersWithDetail(customer.userId);
-        if (ordersResponse.code === 200) {
-          orders.value = ordersResponse.data;
-          console.log('获取到用户订单数据:', ordersResponse.data);
+        // 获取该用户的报名数据
+        const regResponse = await registrationApi.listRegistrationsWithDetail(customer.userId);
+        if (regResponse.code === 200) {
+          registrations.value = regResponse.data;
         } else {
-          orders.value = [];
-          ElMessage.warning(ordersResponse.message || `没有获取到用户 ${customer.name} 的订单数据`);
+          registrations.value = [];
+          ElMessage.warning(regResponse.message || `没有获取到用户 ${customer.name} 的报名数据`);
         }
       } else {
-        // 如果没有用户ID，清空订单列表
-        orders.value = [];
+        registrations.value = [];
       }
 
     }
@@ -316,10 +314,10 @@ const handleCloseConversation = () => {
     });
 };
 
-// 获取当前客户的订单
-const getCustomerOrders = () => {
+// 获取当前客户的报名
+const getCustomerRegistrations = () => {
   if (!currentChat.value) return [];
-  return orders.value;
+  return registrations.value;
 };
 
 // 进入个人中心
@@ -348,75 +346,63 @@ const getStatusType = (status) => {
 
 // 获取状态名称
 const getStatusName = (status) => {
-  return status === 1 ? '已支付待发货' : '已取消';
+  if (status === 1) return '已报名';
+  if (status === 2) return '已取消';
+  if (status === 3) return '已参加';
+  return '未知';
 };
 
-// 查看订单详情
-const viewOrderDetail = async (orderId) => {
+const viewRegistrationDetail = async (registrationId) => {
   detailLoading.value = true;
   detailDialogVisible.value = true;
 
   try {
-    // 尝试调用获取详细订单信息的API
-    let response;
-    try {
-      response = await orderApi.getOrderDetail(orderId);
-    } catch (detailError) {
-      console.warn('获取订单详情失败，尝试获取基本订单信息:', detailError);
-      // 如果获取详情失败，尝试获取基本订单信息
-      response = await orderApi.getOrderById(orderId);
-    }
-
+    const response = await registrationApi.getRegistrationDetail(registrationId);
     if (response.code === 200) {
-      // 更新订单详情数据
       const data = response.data;
-
-      // 根据返回的数据结构设置订单详情
-      Object.assign(orderDetail, {
-        orderId: data.id || data.orderId,
-        specOption: data.specOption || '',
+      Object.assign(registrationDetail, {
+        registrationId: data.registrationId || data.id,
+        tierName: data.tierName || '',
         status: data.status,
         createdAt: data.createdAt,
         userId: data.userId,
-        username: data.username || (data.user ? data.user.username : `用户${data.userId}`),
-        realName: data.realName || (data.user ? data.user.realName : ''),
-        phone: data.phone || (data.user ? data.user.phone : ''),
-        productId: data.productId,
-        sku: data.sku || (data.product ? data.product.sku : ''),
-        productName: data.productName || (data.product ? data.product.name : ''),
-        category: data.category || (data.product ? data.product.category : ''),
-        shipFrom: data.shipFrom || (data.product ? data.product.shipFrom : ''),
-        availableFrom: data.availableFrom || (data.product ? data.product.availableFrom : ''),
-        shipBy: data.shipBy || (data.product ? data.product.shipBy : ''),
-        brand: data.brand || (data.product ? data.product.brand : ''),
-        spec: data.spec || (data.product ? data.product.spec : ''),
-        price: data.price ?? (data.product ? data.product.price : 0)
+        username: data.username || '',
+        realName: data.realName || '',
+        phone: data.phone || '',
+        activityId: data.activityId,
+        ticketCode: data.ticketCode || '',
+        activityTitle: data.activityTitle || '',
+        activityType: data.activityType || '',
+        clubName: data.clubName || '',
+        venue: data.venue || '',
+        registrationStart: data.registrationStart || '',
+        eventStart: data.eventStart || '',
+        eventEnd: data.eventEnd || '',
+        unitPrice: data.unitPrice ?? 0,
+        totalPrice: data.totalPrice ?? 0
       });
-
-      console.log('订单详情:', orderDetail);
     } else {
-      throw new Error(response.message || '获取订单详情失败');
+      throw new Error(response.message || '获取报名详情失败');
     }
   } catch (error) {
-    console.error('获取订单详情失败:', error);
-    ElMessage.error('获取订单详情失败');
+    console.error('获取报名详情失败:', error);
+    ElMessage.error('获取报名详情失败');
     detailDialogVisible.value = false;
   } finally {
     detailLoading.value = false;
   }
 };
 
-// 取消订单
-const cancelOrder = async (order) => {
-  if (order.status !== 1) {
-    ElMessage.warning('只能取消未完成的订单');
+const cancelRegistrationAction = async (reg) => {
+  if (reg.status !== 1) {
+    ElMessage.warning('只能取消已报名的记录');
     return;
   }
 
   try {
     ElMessageBox.confirm(
-      `确定要取消订单 ${order.id} 吗？`,
-      '取消订单',
+      `确定要取消报名 ${reg.id} 吗？`,
+      '取消报名',
       {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -424,33 +410,24 @@ const cancelOrder = async (order) => {
       }
     ).then(async () => {
       try {
-        const response = await orderApi.cancelOrder(order.id);
-
+        const response = await registrationApi.cancelRegistration(reg.id);
         if (response.code === 200) {
-          ElMessage.success('订单已取消');
-
-          // 更新订单状态
-          const index = orders.value.findIndex(o => o.id === order.id);
+          ElMessage.success('报名已取消');
+          const index = registrations.value.findIndex((r) => r.id === reg.id);
           if (index !== -1) {
-            orders.value[index].status = 2; // 设置为已取消
+            registrations.value[index].status = 2;
           }
-
-          // 如果是在详情弹窗中取消的，也更新详情数据
-          if (detailDialogVisible.value && orderDetail.orderId === order.id) {
-            orderDetail.status = 2;
+          if (detailDialogVisible.value && registrationDetail.registrationId === reg.id) {
+            registrationDetail.status = 2;
           }
         } else {
-          throw new Error(response.message || '取消订单失败');
+          throw new Error(response.message || '取消报名失败');
         }
       } catch (error) {
-        console.error('取消订单失败:', error);
-        ElMessage.error('取消订单失败: ' + (error.message || '未知错误'));
+        ElMessage.error('取消报名失败: ' + (error.message || '未知错误'));
       }
-    }).catch(() => {
-      // 用户取消操作
-    });
+    }).catch(() => {});
   } catch (error) {
-    console.error('取消订单操作失败:', error);
     ElMessage.error('操作失败');
   }
 };
@@ -522,13 +499,13 @@ onMounted(initData);
               <el-descriptions-item label="客户姓名">{{ currentChat.userInfo.realName || currentChat.name }}</el-descriptions-item>
               <el-descriptions-item label="联系方式">{{ currentChat.userInfo.phone || '未提供' }}</el-descriptions-item>
               <el-descriptions-item label="邮箱地址">{{ currentChat.userInfo.email || '未提供' }}</el-descriptions-item>
-              <el-descriptions-item label="会员等级">
+              <el-descriptions-item label="社团活跃度">
                 {{
-                  currentChat.userInfo.memberLevel === 1 ? '普通会员' :
-                    currentChat.userInfo.memberLevel === 2 ? '白银会员' :
-                      currentChat.userInfo.memberLevel === 3 ? '黄金会员' :
-                        currentChat.userInfo.memberLevel === 4 ? '白金会员' :
-                          currentChat.userInfo.memberLevel === 5 ? '钻石会员' : '未知'
+                  currentChat.userInfo.memberLevel === 1 ? '新成员' :
+                    currentChat.userInfo.memberLevel === 2 ? '活跃' :
+                      currentChat.userInfo.memberLevel === 3 ? '骨干' :
+                        currentChat.userInfo.memberLevel === 4 ? '核心' :
+                          currentChat.userInfo.memberLevel === 5 ? '荣誉' : '未知'
                 }}
               </el-descriptions-item>
             </el-descriptions>
@@ -538,106 +515,68 @@ onMounted(initData);
           </div>
         </div>
 
-        <!-- 订单管理区域 -->
-        <div class="order-management-area">
-          <h2 class="section-title">订单管理</h2>
-          <div v-if="currentChat" class="customer-orders">
-            <el-table :data="getCustomerOrders()" style="width: 100%; height: calc(100% - 40px)" v-loading="loading">
-              <el-table-column prop="id" label="订单号" width="80" />
-              <el-table-column prop="productId" label="商品ID" width="80" />
-              <el-table-column prop="specOption" label="规格" width="100" />
+        <!-- 报名管理区域 -->
+        <div class="registration-management-area">
+          <h2 class="section-title">报名管理</h2>
+          <div v-if="currentChat" class="customer-registrations">
+            <el-table :data="getCustomerRegistrations()" style="width: 100%; height: calc(100% - 40px)" v-loading="loading">
+              <el-table-column prop="id" label="报名号" width="80" />
+              <el-table-column prop="activityId" label="活动ID" width="80" />
               <el-table-column prop="status" label="状态" width="80">
                 <template #default="scope">
-                  <el-tag
-                    :type="getStatusType(scope.row.status)"
-                  >
+                  <el-tag :type="getStatusType(scope.row.status)">
                     {{ getStatusName(scope.row.status) }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="创建时间" width="160">
+              <el-table-column label="报名时间" width="160">
                 <template #default="scope">
                   {{ formatDateTime(scope.row.createdAt) }}
                 </template>
               </el-table-column>
               <el-table-column label="操作" width="160">
                 <template #default="scope">
-                  <el-button
-                    size="small"
-                    type="primary"
-                    @click="viewOrderDetail(scope.row.id)"
-                  >
-                    详情
-                  </el-button>
-                  <el-button
-                    size="small"
-                    type="danger"
-                    @click="cancelOrder(scope.row)"
-                    :disabled="scope.row.status !== 1"
-                  >
-                    取消
-                  </el-button>
+                  <el-button size="small" type="primary" @click="viewRegistrationDetail(scope.row.id)">详情</el-button>
+                  <el-button size="small" type="danger" @click="cancelRegistrationAction(scope.row)" :disabled="scope.row.status !== 1">取消</el-button>
                 </template>
               </el-table-column>
             </el-table>
-            <div v-if="getCustomerOrders().length === 0" class="no-orders">
-              <el-empty description="暂无订单数据" />
+            <div v-if="getCustomerRegistrations().length === 0" class="no-registrations">
+              <el-empty description="暂无报名数据" />
             </div>
           </div>
           <div v-else class="empty-info">
-            <el-empty description="请选择一个客户查看订单" />
+            <el-empty description="请选择一个客户查看报名" />
           </div>
         </div>
       </div>
     </main>
 
-    <!-- 订单详情弹窗 -->
-    <el-dialog
-      v-model="detailDialogVisible"
-      title="订单详情"
-      width="650px"
-      destroy-on-close
-    >
+    <el-dialog v-model="detailDialogVisible" title="报名详情" width="650px" destroy-on-close>
       <div v-loading="detailLoading">
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="订单ID" :span="2">{{ orderDetail.orderId }}</el-descriptions-item>
-          <el-descriptions-item label="选购规格">{{ orderDetail.specOption }}</el-descriptions-item>
-          <el-descriptions-item label="订单状态">
-            <el-tag :type="getStatusType(orderDetail.status)">{{ getStatusName(orderDetail.status) }}</el-tag>
+          <el-descriptions-item label="报名ID" :span="2">{{ registrationDetail.registrationId }}</el-descriptions-item>
+          <el-descriptions-item label="票档">{{ registrationDetail.tierName }}</el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="getStatusType(registrationDetail.status)">{{ getStatusName(registrationDetail.status) }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="下单时间" :span="2">{{ formatDateTime(orderDetail.createdAt) }}</el-descriptions-item>
-
-          <el-descriptions-item label="用户ID">{{ orderDetail.userId }}</el-descriptions-item>
-          <el-descriptions-item label="用户名">{{ orderDetail.username }}</el-descriptions-item>
-          <el-descriptions-item label="真实姓名">{{ orderDetail.realName || '未提供' }}</el-descriptions-item>
-          <el-descriptions-item label="联系电话">{{ orderDetail.phone || '未提供' }}</el-descriptions-item>
-
-          <el-descriptions-item label="商品信息" :span="2" class="product-info-header">
-            <div class="product-header">
-              <span class="product-sku">{{ orderDetail.sku }}</span>
-              <span class="brand">{{ orderDetail.brand }}</span>
-            </div>
-            <div class="product-title">{{ orderDetail.productName }}</div>
-          </el-descriptions-item>
-
-          <el-descriptions-item label="类目">{{ orderDetail.category }}</el-descriptions-item>
-          <el-descriptions-item label="发货地">{{ orderDetail.shipFrom }}</el-descriptions-item>
-          <el-descriptions-item label="开售时间">{{ formatDateTime(orderDetail.availableFrom) }}</el-descriptions-item>
-          <el-descriptions-item label="预计发货">{{ formatDateTime(orderDetail.shipBy) }}</el-descriptions-item>
-          <el-descriptions-item label="规格说明">{{ orderDetail.spec }}</el-descriptions-item>
-          <el-descriptions-item label="单价">¥{{ orderDetail.price }}</el-descriptions-item>
+          <el-descriptions-item label="报名时间" :span="2">{{ formatDateTime(registrationDetail.createdAt) }}</el-descriptions-item>
+          <el-descriptions-item label="用户">{{ registrationDetail.realName || registrationDetail.username }}</el-descriptions-item>
+          <el-descriptions-item label="联系电话">{{ registrationDetail.phone || '未提供' }}</el-descriptions-item>
+          <el-descriptions-item label="活动" :span="2">{{ registrationDetail.activityTitle }}</el-descriptions-item>
+          <el-descriptions-item label="社团">{{ registrationDetail.clubName }}</el-descriptions-item>
+          <el-descriptions-item label="类型">{{ registrationDetail.activityType }}</el-descriptions-item>
+          <el-descriptions-item label="地点">{{ registrationDetail.venue }}</el-descriptions-item>
+          <el-descriptions-item label="活动开始">{{ formatDateTime(registrationDetail.eventStart) }}</el-descriptions-item>
+          <el-descriptions-item label="票价">¥{{ registrationDetail.unitPrice }}</el-descriptions-item>
+          <el-descriptions-item label="总价">¥{{ registrationDetail.totalPrice }}</el-descriptions-item>
         </el-descriptions>
       </div>
-
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="detailDialogVisible = false">关闭</el-button>
-          <el-button
-            type="danger"
-            @click="cancelOrder({id: orderDetail.orderId, status: orderDetail.status})"
-            :disabled="orderDetail.status !== 1"
-          >
-            取消订单
+          <el-button type="danger" @click="cancelRegistrationAction({ id: registrationDetail.registrationId, status: registrationDetail.status })" :disabled="registrationDetail.status !== 1">
+            取消报名
           </el-button>
         </span>
       </template>
@@ -761,7 +700,7 @@ onMounted(initData);
   overflow: auto;
 }
 
-.order-management-area {
+.registration-management-area {
   flex: 1;
   padding: 20px;
   background-color: white;
@@ -789,34 +728,10 @@ onMounted(initData);
   margin-bottom: 20px;
 }
 
-.customer-orders {
+.customer-registrations {
   height: calc(100% - 40px);
   display: flex;
   flex-direction: column;
-}
-
-.product-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.product-sku {
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.brand {
-  color: #606266;
-}
-
-.product-title {
-  margin-top: 6px;
-  font-weight: normal;
-}
-
-.product-info-header {
-  background-color: var(--sa-bg-elevated, #f8fafc);
 }
 
 .dialog-footer {

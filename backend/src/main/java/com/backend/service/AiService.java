@@ -1,26 +1,35 @@
 package com.backend.service;
 
 import java.util.List;
+import java.util.Map;
 
-import com.backend.entity.Product;
-import com.backend.entity.ProductOrder;
-import com.backend.vo.ProductOrderDetail;
+import com.backend.entity.Activity;
+import com.backend.entity.Registration;
+import com.backend.entity.User;
+import com.backend.vo.DashboardData;
+import com.backend.vo.RegistrationDetail;
 
 public interface AiService {
 
-    void cancelProductOrder(Long orderId, String name);
+    void cancelRegistration(Long registrationId, String name);
 
-    ProductOrder createProductOrder(Long userId, Long productId, String specOption, String name);
+    Registration createRegistration(Long userId, Long activityId, String tierName, String name);
 
-    ProductOrderDetail getProductOrderDetail(Long orderId);
+    RegistrationDetail getRegistrationDetail(Long registrationId);
 
-    List<ProductOrderDetail> getProductOrdersByName(String realName);
+    List<RegistrationDetail> getRegistrationsByName(String realName);
 
-    Product getProductBySku(String sku);
+    Activity getActivityByTicketCode(String ticketCode);
 
-    List<Product> searchProducts(String category, String shipFrom, String dateStr);
+    List<Activity> searchActivities(String activityType, String venue, String dateStr);
 
-    List<Product> getProductsByBrand(String brand);
+    List<Activity> getActivitiesByClub(String clubName);
 
-    List<Product> listRecentlyAvailableProducts(Integer limit);
+    List<Activity> listUpcomingActivities(Integer limit);
+
+    DashboardData getDashboardOverview();
+
+    User getUserProfile(Long userId);
+
+    List<Map<String, Object>> getActivityStats(String activityTitle);
 }

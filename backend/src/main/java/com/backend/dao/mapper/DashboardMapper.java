@@ -12,7 +12,7 @@ public interface DashboardMapper {
 
     List<String> getRecentDates();
 
-    List<Integer> getRecentDatesProductCount();
+    List<Integer> getRecentDatesActivityCount();
 
-    List<Integer> getRecentDatesOrderCount();
+    List<Integer> getRecentDatesRegistrationCount();
 }

@@ -53,16 +53,16 @@ public class LogAspect {
     public void userOperationPointcut() {}
 
     /**
-     * 定义订单相关操作切点
+     * 定义报名相关操作切点
      */
-    @Pointcut("execution(* com.backend.service.*Order*.*(..)) || execution(* com.backend.service.impl.*Order*.*(..))")
-    public void orderOperationPointcut() {}
+    @Pointcut("execution(* com.backend.service.*Registration*.*(..)) || execution(* com.backend.service.impl.*Registration*.*(..))")
+    public void registrationOperationPointcut() {}
 
     /**
-     * 定义商品（非订单）相关操作切点
+     * 定义活动相关操作切点
      */
-    @Pointcut("execution(* com.backend.service.ProductService.*(..)) || execution(* com.backend.service.impl.ProductServiceImpl.*(..))")
-    public void productOperationPointcut() {}
+    @Pointcut("execution(* com.backend.service.ActivityService.*(..)) || execution(* com.backend.service.impl.ActivityServiceImpl.*(..))")
+    public void activityOperationPointcut() {}
 
     /**
      * 获取当前登录用户ID
@@ -178,25 +178,22 @@ public class LogAspect {
     /**
      * 记录订单相关操作日志
      */
-    @Around("orderOperationPointcut()")
-    public Object recordOrderOperationLog(ProceedingJoinPoint joinPoint) throws Throwable {
+    @Around("registrationOperationPointcut()")
+    public Object recordRegistrationOperationLog(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         String methodName = method.getName();
 
         String operationDesc = null;
 
-        // 记录特定订单操作
         if (methodName.contains("create") || methodName.contains("add")) {
-            operationDesc = "创建订单";
+            operationDesc = "创建报名";
         } else if (methodName.contains("cancel")) {
-            operationDesc = "取消订单";
-        } else if (methodName.contains("pay") || methodName.contains("payment")) {
-            operationDesc = "支付订单";
-        } else if (methodName.contains("refund")) {
-            operationDesc = "退款订单";
+            operationDesc = "取消报名";
+        } else if (methodName.contains("complete")) {
+            operationDesc = "标记已参加";
         } else if (methodName.contains("change") || methodName.contains("modify")) {
-            operationDesc = "修改订单";
+            operationDesc = "修改报名";
         }
 
         if (operationDesc != null) {
@@ -209,8 +206,8 @@ public class LogAspect {
     /**
      * 记录商品相关操作日志
      */
-    @Around("productOperationPointcut()")
-    public Object recordProductOperationLog(ProceedingJoinPoint joinPoint) throws Throwable {
+    @Around("activityOperationPointcut()")
+    public Object recordActivityOperationLog(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         String methodName = method.getName();
@@ -218,13 +215,13 @@ public class LogAspect {
         String operationDesc = null;
 
         if (methodName.contains("add") || methodName.contains("create") || methodName.contains("save")) {
-            operationDesc = "添加商品";
+            operationDesc = "添加活动";
         } else if (methodName.contains("update") || methodName.contains("modify")) {
-            operationDesc = "更新商品信息";
+            operationDesc = "更新活动信息";
         } else if (methodName.contains("cancel")) {
-            operationDesc = "取消商品相关操作";
+            operationDesc = "取消活动相关操作";
         } else if (methodName.contains("delete") || methodName.contains("remove")) {
-            operationDesc = "删除商品";
+            operationDesc = "删除活动";
         }
 
         if (operationDesc != null) {

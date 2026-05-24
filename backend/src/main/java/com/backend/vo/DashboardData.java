@@ -10,12 +10,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DashboardData {
-    private Integer todayProducts;
-    private Integer todayOrders;
+    private Integer todayActivities;
+    private Integer todayRegistrations;
     private Integer activeUsers;
     private Integer serviceTickets;
 
     private List<String> dates;
-    private List<Integer> dailyProducts;
-    private List<Integer> dailyOrders;
+    private List<Integer> dailyActivities;
+    private List<Integer> dailyRegistrations;
 }

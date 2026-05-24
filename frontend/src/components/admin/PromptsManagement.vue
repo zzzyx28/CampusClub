@@ -10,10 +10,10 @@ const filteredPrompts = ref([]);
 
 // 场景选项
 const scenarios = [
-  { id: 1, name: '订票咨询' },
-  { id: 2, name: '商品查询' },
-  { id: 3, name: '退改签' },
-  { id: 4, name: '会员服务' },
+  { id: 1, name: '活动咨询' },
+  { id: 2, name: '报名查询' },
+  { id: 3, name: '取消与退票' },
+  { id: 4, name: '社团服务' },
   { id: 5, name: '投诉处理' }
 ];
 

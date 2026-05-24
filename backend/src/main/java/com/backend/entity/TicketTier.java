@@ -13,23 +13,23 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("product_sku")
-public class ProductSku {
+@TableName("ticket_tier")
+public class TicketTier {
 
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    private Long productId;
+    private Long activityId;
 
-    private String sku;
+    private String ticketCode;
 
-    private String specOption;
+    private String tierName;
 
-    private BigDecimal salePrice;
+    private BigDecimal price;
 
-    private BigDecimal marketPrice;
+    private BigDecimal originalPrice;
 
-    private Integer stock;
+    private Integer capacity;
 
     private Integer isDefault;
 

@@ -19,12 +19,12 @@ public class DashboardServiceImpl implements DashboardService {
         DashboardData data = dashboardMapper.getBaseStats();
 
         List<String> dates = dashboardMapper.getRecentDates();
-        List<Integer> productCounts = dashboardMapper.getRecentDatesProductCount();
-        List<Integer> orderCounts = dashboardMapper.getRecentDatesOrderCount();
+        List<Integer> activityCounts = dashboardMapper.getRecentDatesActivityCount();
+        List<Integer> registrationCounts = dashboardMapper.getRecentDatesRegistrationCount();
 
         data.setDates(dates);
-        data.setDailyProducts(productCounts);
-        data.setDailyOrders(orderCounts);
+        data.setDailyActivities(activityCounts);
+        data.setDailyRegistrations(registrationCounts);
 
         return data;
     }

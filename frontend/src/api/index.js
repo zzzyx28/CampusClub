@@ -1,7 +1,7 @@
 import * as authApi from './auth';
 import * as userApi from './user';
-import * as productApi from './product';
-import * as orderApi from './order';
+import * as activityApi from './activity';
+import * as registrationApi from './registration';
 import * as conversationApi from './conversation';
 import * as logApi from './log';
 import * as dashboardApi from './dashboard';
@@ -11,8 +11,8 @@ import * as knowledgeApi from './knowledge';
 export {
   authApi,
   userApi,
-  productApi,
-  orderApi,
+  activityApi,
+  registrationApi,
   conversationApi,
   logApi,
   dashboardApi,

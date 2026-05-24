@@ -18,7 +18,7 @@ const loginForm = reactive({
 // 角色选项
 const roleOptions = [
   { label: '用户', value: 'user' },
-  { label: '客服', value: 'service' },
+  { label: '社团助手', value: 'service' },
   { label: '管理员', value: 'admin' },
 ]
 
@@ -106,7 +106,7 @@ const goToForgotPassword = () => {
         <div class="login-content">
           <h2 style="display: flex; align-items: center; gap: 10px">
             <img src="@/assets/logo.png" alt="Logo" style="height: 32px" />
-            SmartShop 智能电商客服
+            CampusClub 校园社团助手
           </h2>
 
           <el-form>

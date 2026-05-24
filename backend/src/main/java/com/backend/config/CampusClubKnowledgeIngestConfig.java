@@ -13,17 +13,14 @@ import org.springframework.boot.ApplicationRunner;
 
 import java.util.List;
 
-/**
- * 启动时将静态知识入库，供 QuestionAnswerAdvisor 做向量检索。
- */
 @Configuration
-public class SmartShopKnowledgeIngestConfig {
+public class CampusClubKnowledgeIngestConfig {
 
     @Bean
-    ApplicationRunner ingestSmartShopKnowledge(VectorStore vectorStore,
-            @Value("classpath:rag/ecommerce-knowledge.txt") Resource knowledgeResource) {
+    ApplicationRunner ingestCampusClubKnowledge(VectorStore vectorStore,
+            @Value("classpath:rag/campus-club-knowledge.txt") Resource knowledgeResource) {
         return args -> {
-            if (!vectorStore.similaritySearch(SearchRequest.defaults().withQuery("SmartShop").withTopK(1)).isEmpty()) {
+            if (!vectorStore.similaritySearch(SearchRequest.defaults().withQuery("CampusClub").withTopK(1)).isEmpty()) {
                 return;
             }
             var raw = new TextReader(knowledgeResource).read();

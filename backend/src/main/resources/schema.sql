@@ -1,10 +1,9 @@
 -- 创建数据库（如果不存在）
-CREATE DATABASE IF NOT EXISTS `smartshop`;
+CREATE DATABASE IF NOT EXISTS `campusclub`;
 
--- 切换数据库
-USE `smartshop`;
+USE `campusclub`;
 
--- 用户表：user
+-- 用户表
 CREATE TABLE IF NOT EXISTS `user` (
   `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
   `username` VARCHAR(50) NOT NULL UNIQUE,
@@ -12,76 +11,82 @@ CREATE TABLE IF NOT EXISTS `user` (
   `email` VARCHAR(100),
   `phone` VARCHAR(20),
   `real_name` VARCHAR(50) COMMENT '真实姓名',
-  `id_card` VARCHAR(30) COMMENT '身份证号',
-  `user_type` INT NOT NULL DEFAULT 1 COMMENT '用户类型：1-普通用户，2-客服人员，3-系统管理员',
-  `member_level` INT DEFAULT 1 COMMENT '会员等级：1-普通会员，2-白银会员，3-黄金会员，4-白金会员，5-钻石会员',
+  `id_card` VARCHAR(30) COMMENT '学号/身份证号',
+  `user_type` INT NOT NULL DEFAULT 1 COMMENT '用户类型：1-普通用户，2-社团助手，3-系统管理员',
+  `member_level` INT DEFAULT 1 COMMENT '社团活跃度：1-新成员，2-活跃，3-骨干，4-核心，5-荣誉',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户基础信息表';
 
--- 商品信息表：product
-CREATE TABLE IF NOT EXISTS `product` (
+-- 社团活动表
+CREATE TABLE IF NOT EXISTS `activity` (
   `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
-  `spu` VARCHAR(64) NOT NULL COMMENT '商品 SPU',
-  `name` VARCHAR(200) NOT NULL COMMENT '商品名称',
-  `brand` VARCHAR(80) NOT NULL COMMENT '品牌',
-  `category` VARCHAR(80) NOT NULL COMMENT '类目',
-  `description` VARCHAR(500) COMMENT '商品描述',
-  `cover_image` VARCHAR(255) COMMENT '商品主图',
-  `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-上架，0-下架',
+  `activity_code` VARCHAR(64) NOT NULL COMMENT '活动编号',
+  `title` VARCHAR(200) NOT NULL COMMENT '活动标题',
+  `club_name` VARCHAR(80) NOT NULL COMMENT '主办社团',
+  `activity_type` VARCHAR(80) NOT NULL COMMENT '活动类型',
+  `description` VARCHAR(500) COMMENT '活动简介',
+  `venue` VARCHAR(120) NOT NULL COMMENT '活动地点',
+  `registration_start` DATETIME NOT NULL COMMENT '报名开始时间',
+  `event_start` DATETIME NOT NULL COMMENT '活动开始时间',
+  `event_end` DATETIME COMMENT '活动结束时间',
+  `poster_url` VARCHAR(255) COMMENT '活动海报',
+  `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-开放报名，0-已关闭',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY `uk_product_spu` (`spu`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品基础信息表';
+  UNIQUE KEY `uk_activity_code` (`activity_code`),
+  INDEX `idx_activity_registration_start` (`registration_start`),
+  INDEX `idx_activity_event_start` (`event_start`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='社团活动表';
 
--- 商品规格表：product_sku（一个商品可有多个规格及价格）
-CREATE TABLE IF NOT EXISTS `product_sku` (
+-- 票档/名额表
+CREATE TABLE IF NOT EXISTS `ticket_tier` (
   `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
-  `product_id` BIGINT NOT NULL COMMENT '关联商品ID',
-  `sku` VARCHAR(64) NOT NULL COMMENT '规格 SKU',
-  `spec_option` VARCHAR(120) NOT NULL COMMENT '规格选项，如 256G/深空灰',
-  `sale_price` DECIMAL(10,2) NOT NULL COMMENT '销售价',
-  `market_price` DECIMAL(10,2) COMMENT '划线价',
-  `stock` INT NOT NULL DEFAULT 0 COMMENT '库存',
-  `is_default` TINYINT NOT NULL DEFAULT 0 COMMENT '是否默认规格：1-是，0-否',
+  `activity_id` BIGINT NOT NULL COMMENT '关联活动ID',
+  `ticket_code` VARCHAR(64) NOT NULL COMMENT '票种编码',
+  `tier_name` VARCHAR(120) NOT NULL COMMENT '票档名称',
+  `price` DECIMAL(10,2) NOT NULL COMMENT '票价，0 表示免费',
+  `original_price` DECIMAL(10,2) COMMENT '原价/划线价',
+  `capacity` INT NOT NULL DEFAULT 0 COMMENT '剩余名额',
+  `is_default` TINYINT NOT NULL DEFAULT 0 COMMENT '是否默认票档：1-是，0-否',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY `uk_product_sku_sku` (`sku`),
-  INDEX `idx_product_sku_product` (`product_id`),
-  CONSTRAINT `fk_product_sku_product` FOREIGN KEY (`product_id`) REFERENCES `product`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品规格与价格库存表';
+  UNIQUE KEY `uk_ticket_code` (`ticket_code`),
+  INDEX `idx_ticket_tier_activity` (`activity_id`),
+  CONSTRAINT `fk_ticket_tier_activity` FOREIGN KEY (`activity_id`) REFERENCES `activity`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='活动票档与名额表';
 
--- 商品订单表：product_order
-CREATE TABLE IF NOT EXISTS `product_order` (
-  `id` BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '订单编号',
+-- 报名记录表
+CREATE TABLE IF NOT EXISTS `registration` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '报名编号',
   `user_id` BIGINT NOT NULL,
-  `product_id` BIGINT NOT NULL,
-  `product_sku_id` BIGINT NOT NULL COMMENT '选购规格ID',
-  `quantity` INT NOT NULL DEFAULT 1 COMMENT '购买数量',
-  `unit_price` DECIMAL(10,2) NOT NULL COMMENT '下单时单价快照',
-  `total_price` DECIMAL(10,2) NOT NULL COMMENT '下单总价快照',
-  `status` INT DEFAULT 1 COMMENT '订单状态：1-进行中，2-已取消，3-已完成',
+  `activity_id` BIGINT NOT NULL,
+  `ticket_tier_id` BIGINT NOT NULL COMMENT '所选票档ID',
+  `ticket_count` INT NOT NULL DEFAULT 1 COMMENT '报名数量',
+  `unit_price` DECIMAL(10,2) NOT NULL COMMENT '报名时单价快照',
+  `total_price` DECIMAL(10,2) NOT NULL COMMENT '报名总价快照',
+  `status` INT DEFAULT 1 COMMENT '状态：1-已报名，2-已取消，3-已参加',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT `fk_porder_user` FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_porder_product` FOREIGN KEY (`product_id`) REFERENCES `product`(`id`),
-  CONSTRAINT `fk_porder_product_sku` FOREIGN KEY (`product_sku_id`) REFERENCES `product_sku`(`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户商品订单记录';
+  CONSTRAINT `fk_registration_user` FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_registration_activity` FOREIGN KEY (`activity_id`) REFERENCES `activity`(`id`),
+  CONSTRAINT `fk_registration_ticket_tier` FOREIGN KEY (`ticket_tier_id`) REFERENCES `ticket_tier`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='活动报名记录';
 
--- 会话索引表：conversation_index
+-- 会话索引表
 CREATE TABLE IF NOT EXISTS `conversation_index` (
   `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
   `user_id` BIGINT NOT NULL,
   `conversation_uuid` VARCHAR(64) NOT NULL UNIQUE,
   `last_message` TEXT,
-  `status` INT DEFAULT 1 COMMENT '会话状态：1-活跃(active)、2-已转人工(transferred)、3-已关闭(closed)',
-  `service_user_id` BIGINT COMMENT '处理客服ID，转人工时有效',
+  `status` INT DEFAULT 1 COMMENT '会话状态：1-活跃，2-已转人工，3-已关闭',
+  `service_user_id` BIGINT COMMENT '处理助手ID，转人工时有效',
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_conversation_user` FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_conversation_service` FOREIGN KEY (`service_user_id`) REFERENCES `user`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户会话索引信息表';
 
--- 系统日志表：system_log
+-- 系统日志表
 CREATE TABLE IF NOT EXISTS `system_log` (
   `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
   `operator_id` BIGINT COMMENT '操作者ID',

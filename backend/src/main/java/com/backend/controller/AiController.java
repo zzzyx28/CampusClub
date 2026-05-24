@@ -16,13 +16,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.aop.AiChatLoggingAdvisor;
-import com.backend.config.SmartShopAgentPrompts;
+import com.backend.config.CampusClubAgentPrompts;
 
 import reactor.core.publisher.Flux;
 
-/**
- * AI 对话：会话级记忆、向量检索补充知识、工具 JSON 结果由模型解析。
- */
 @RestController
 @RequestMapping("/api/ai")
 public class AiController {
@@ -36,28 +33,26 @@ public class AiController {
                 .withTopK(5)
                 .withSimilarityThreshold(0.2);
         this.chatClient = chatClientBuilder
-                .defaultSystem(SmartShopAgentPrompts.SYSTEM_TEMPLATE)
+                .defaultSystem(CampusClubAgentPrompts.SYSTEM_TEMPLATE)
                 .defaultAdvisors(
                         new PromptChatMemoryAdvisor(chatMemory),
                         new QuestionAnswerAdvisor(vectorStore, ragSearch),
                         new AiChatLoggingAdvisor())
                 .defaultFunctions(
-                        "cancelProductOrder",
-                        "getProductOrderDetail",
-                        "getBuyerProductOrders",
-                        "createProductOrder",
-                        "getProductBySku",
-                        "searchProducts",
-                        "getProductsByBrand",
-                        "listRecentlyAvailableProducts")
+                        "cancelRegistration",
+                        "getRegistrationDetail",
+                        "getRegistrationsByName",
+                        "createRegistration",
+                        "getActivityByTicketCode",
+                        "searchActivities",
+                        "getActivitiesByClub",
+                        "listUpcomingActivities",
+                        "getDashboardOverview",
+                        "getUserProfile",
+                        "getActivityStats")
                 .build();
     }
 
-    /**
-     * @param message 用户输入
-     * @param conversationId   与业务会话 UUID 一致，保证多轮与工具上下文连续
-     * @param userId           当前登录用户 ID（下单）；未传则须向用户确认身份
-     */
     @GetMapping(value = "/generateStreamAsString", produces = MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8")
     public Flux<String> generateStreamAsString(
             @RequestParam(value = "message", defaultValue = "你好") String message,
@@ -68,7 +63,7 @@ public class AiController {
                 ? conversationId
                 : "anonymous";
 
-        String userLabel = userId != null ? String.valueOf(userId) : "未知（请引导用户登录或询问后再下单）";
+        String userLabel = userId != null ? String.valueOf(userId) : "未知（请引导用户登录或询问后再报名）";
 
         Flux<String> content = this.chatClient.prompt()
                 .user(message)

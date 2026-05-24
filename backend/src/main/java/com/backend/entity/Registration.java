@@ -8,33 +8,31 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
-/**
- * 商品信息实体
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("product")
-public class Product {
+@TableName("registration")
+public class Registration {
 
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    private String spu;
+    private Long userId;
 
-    private String name;
+    private Long activityId;
 
-    private String brand;
+    private Long ticketTierId;
 
-    private String category;
+    private Integer ticketCount;
 
-    private String description;
+    private BigDecimal unitPrice;
 
-    private String coverImage;
+    private BigDecimal totalPrice;
 
+    /** 1-已报名，2-已取消，3-已参加 */
     private Integer status;
 
     private LocalDateTime createdAt;
@@ -42,5 +40,8 @@ public class Product {
     private LocalDateTime updatedAt;
 
     @TableField(exist = false)
-    private List<ProductSku> skuList;
+    private User user;
+
+    @TableField(exist = false)
+    private Activity activity;
 }

@@ -69,8 +69,8 @@ const goToLogin = () => {
 <template>
   <header class="header">
     <div class="logo" @click="goHome">
-      <img src="@/assets/logo.png" alt="SmartShop" class="logo-img" />
-      <span class="logo-text">SmartShop 智能电商</span>
+      <img src="@/assets/logo.png" alt="CampusClub" class="logo-img" />
+      <span class="logo-text">CampusClub 校园社团助手</span>
     </div>
     
     <div class="user-area">

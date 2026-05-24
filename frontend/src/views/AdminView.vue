@@ -4,8 +4,8 @@ import HeaderNav from '@/components/common/HeaderNav.vue';
 import SideMenu from '@/components/common/SideMenu.vue';
 import StatCard from '@/components/admin/StatCard.vue';
 import ConversationsManagement from '@/components/admin/ConversationsManagement.vue';
-import ProductsManagement from '@/components/admin/ProductsManagement.vue';
-import OrdersManagement from '@/components/admin/OrdersManagement.vue';
+import ActivitiesManagement from '@/components/admin/ActivitiesManagement.vue';
+import RegistrationsManagement from '@/components/admin/RegistrationsManagement.vue';
 import PromptsManagement from '@/components/admin/PromptsManagement.vue';
 import KnowledgeManagement from '@/components/admin/KnowledgeManagement.vue';
 import AccountsManagement from '@/components/admin/AccountsManagement.vue';
@@ -20,22 +20,22 @@ const activeMenu = ref('dashboard');
 const loading = ref(false);
 
 // 图表实例
-const productChartRef = ref(null);
-const orderChartRef = ref(null);
-let productChart = null;
-let orderChart = null;
+const activityChartRef = ref(null);
+const registrationChartRef = ref(null);
+let activityChart = null;
+let registrationChart = null;
 
 // 仪表盘数据
 const dashboardData = reactive({
   stats: [
-    { title: '今日上新', value: 0, icon: 'Location', color: '#2563eb' },
-    { title: '今日订单', value: 0, icon: 'Ticket', color: '#16a34a' },
+    { title: '今日活动', value: 0, icon: 'Location', color: '#2563eb' },
+    { title: '今日报名', value: 0, icon: 'Ticket', color: '#16a34a' },
     { title: '活跃用户', value: 0, icon: 'User', color: '#d97706' },
-    { title: '客服工单', value: 0, icon: 'Service', color: '#ea580c' }
+    { title: '助手工单', value: 0, icon: 'Service', color: '#ea580c' }
   ],
   dates: [],
-  dailyProducts: [],
-  dailyOrders: []
+  dailyActivities: [],
+  dailyRegistrations: []
 });
 
 // 从 token 中获取用户信息
@@ -65,15 +65,14 @@ const loadDashboardData = async () => {
       const data = response.data;
       
       // 更新统计数据
-      dashboardData.stats[0].value = data.todayProducts || 0;
-      dashboardData.stats[1].value = data.todayOrders || 0;
+      dashboardData.stats[0].value = data.todayActivities || 0;
+      dashboardData.stats[1].value = data.todayRegistrations || 0;
       dashboardData.stats[2].value = data.activeUsers || 0;
       dashboardData.stats[3].value = data.serviceTickets || 0;
       
-      // 更新图表数据
       dashboardData.dates = data.dates || [];
-      dashboardData.dailyProducts = data.dailyProducts || [];
-      dashboardData.dailyOrders = data.dailyOrders || [];
+      dashboardData.dailyActivities = data.dailyActivities || [];
+      dashboardData.dailyRegistrations = data.dailyRegistrations || [];
       
       // 初始化图表
       initCharts();
@@ -92,14 +91,14 @@ const loadDashboardData = async () => {
 const initCharts = () => {
   // 确保DOM已经渲染
   setTimeout(() => {
-    if (productChartRef.value) {
-      if (productChart) {
-        productChart.dispose();
+    if (activityChartRef.value) {
+      if (activityChart) {
+        activityChart.dispose();
       }
-      productChart = echarts.init(productChartRef.value);
-      const productOption = {
+      activityChart = echarts.init(activityChartRef.value);
+      const activityOption = {
         title: {
-          text: '近期开售商品数量趋势',
+          text: '近期活动数量趋势',
           left: 'center'
         },
         tooltip: {
@@ -118,13 +117,13 @@ const initCharts = () => {
         },
         yAxis: {
           type: 'value',
-          name: '商品数量'
+          name: '活动数量'
         },
         series: [
           {
-            name: '商品数量',
+            name: '活动数量',
             type: 'bar',
-            data: dashboardData.dailyProducts,
+            data: dashboardData.dailyActivities,
             itemStyle: {
               color: '#2563eb',
               borderRadius: [6, 6, 0, 0]
@@ -138,19 +137,17 @@ const initCharts = () => {
           containLabel: true
         }
       };
-      productChart.setOption(productOption);
+      activityChart.setOption(activityOption);
     }
     
-    // 初始化订单图表
-    if (orderChartRef.value) {
-      // 如果已经有图表实例，先销毁
-      if (orderChart) {
-        orderChart.dispose();
+    if (registrationChartRef.value) {
+      if (registrationChart) {
+        registrationChart.dispose();
       }
-      orderChart = echarts.init(orderChartRef.value);
-      const orderOption = {
+      registrationChart = echarts.init(registrationChartRef.value);
+      const registrationOption = {
         title: {
-          text: '近期订单数量趋势',
+          text: '近期报名数量趋势',
           left: 'center'
         },
         tooltip: {
@@ -166,13 +163,13 @@ const initCharts = () => {
         },
         yAxis: {
           type: 'value',
-          name: '订单数量'
+          name: '报名数量'
         },
         series: [
           {
-            name: '订单数量',
+            name: '报名数量',
             type: 'line',
-            data: dashboardData.dailyOrders,
+            data: dashboardData.dailyRegistrations,
             smooth: true,
             itemStyle: {
               color: '#16a34a'
@@ -192,18 +189,18 @@ const initCharts = () => {
           containLabel: true
         }
       };
-      orderChart.setOption(orderOption);
+      registrationChart.setOption(registrationOption);
     }
   }, 100);
 };
 
 // 窗口大小变化时重绘图表
 const resizeCharts = () => {
-  if (productChart) {
-    productChart.resize();
+  if (activityChart) {
+    activityChart.resize();
   }
-  if (orderChart) {
-    orderChart.resize();
+  if (registrationChart) {
+    registrationChart.resize();
   }
 };
 
@@ -229,21 +226,21 @@ onUnmounted(() => {
   window.removeEventListener('resize', resizeCharts);
   
   // 销毁图表实例
-  if (productChart) {
-    productChart.dispose();
-    productChart = null;
+  if (activityChart) {
+    activityChart.dispose();
+    activityChart = null;
   }
-  if (orderChart) {
-    orderChart.dispose();
-    orderChart = null;
+  if (registrationChart) {
+    registrationChart.dispose();
+    registrationChart = null;
   }
 });
 
 // 侧边栏菜单项
 const menuItems = [
   { index: 'dashboard', title: '仪表盘', icon: 'DataBoard' },
-  { index: 'products', title: '商品管理', icon: 'Location' },
-  { index: 'orders', title: '订单管理', icon: 'Ticket' },
+  { index: 'activities', title: '活动管理', icon: 'Location' },
+  { index: 'registrations', title: '报名管理', icon: 'Ticket' },
   { index: 'conversations', title: '会话管理', icon: 'ChatDotRound' },
   { index: 'prompts', title: '提示词管理', icon: 'ChatLineRound' },
   { index: 'knowledge', title: '知识库管理', icon: 'Document' },
@@ -290,32 +287,31 @@ const menuItems = [
             <el-card class="chart-card">
               <template #header>
                 <div class="card-header">
-                  <span>商品概览</span>
+                  <span>活动概览</span>
                 </div>
               </template>
-              <div ref="productChartRef" class="chart-container"></div>
+              <div ref="activityChartRef" class="chart-container"></div>
             </el-card>
             
             <el-card class="chart-card">
               <template #header>
                 <div class="card-header">
-                  <span>订单趋势</span>
+                  <span>报名趋势</span>
                 </div>
               </template>
-              <div ref="orderChartRef" class="chart-container"></div>
+              <div ref="registrationChartRef" class="chart-container"></div>
             </el-card>
           </div>
         </div>
         
-        <div v-if="activeMenu === 'products'">
-          <h2 class="page-title">商品管理</h2>
-          <ProductsManagement />
+        <div v-if="activeMenu === 'activities'">
+          <h2 class="page-title">活动管理</h2>
+          <ActivitiesManagement />
         </div>
         
-        <!-- 订单管理 -->
-        <div v-if="activeMenu === 'orders'">
-          <h2 class="page-title">订单管理</h2>
-          <OrdersManagement />
+        <div v-if="activeMenu === 'registrations'">
+          <h2 class="page-title">报名管理</h2>
+          <RegistrationsManagement />
         </div>
         
         <!-- 会话管理 -->

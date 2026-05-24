@@ -65,14 +65,14 @@ public class EmailUtil {
         }
     }
 
-    public boolean sendOrderNotification(String email, String orderId, String sku,
-                                    String specOption, String shipByTime, int status) {
+    public boolean sendRegistrationNotification(String email, String registrationId, String ticketCode,
+                                    String tierName, String eventStart, int status) {
         try {
-            sendOrderNotificationEmail(email, orderId, sku, specOption, shipByTime, status);
+            sendRegistrationNotificationEmail(email, registrationId, ticketCode, tierName, eventStart, status);
             return true;
         } catch (Exception e) {
-            logger.error("发送订单通知邮件失败: {}", e.getMessage(), e);
-            throw new RuntimeException("发送订单通知邮件失败: " + e.getMessage(), e);
+            logger.error("发送报名通知邮件失败: {}", e.getMessage(), e);
+            throw new RuntimeException("发送报名通知邮件失败: " + e.getMessage(), e);
         }
     }
 
@@ -128,54 +128,51 @@ public class EmailUtil {
                 + "</div>";
     }
 
-    private void sendOrderNotificationEmail(String toEmail, String orderId, String sku,
-                                            String specOption, String shipByTime, int status) throws Exception {
+    private void sendRegistrationNotificationEmail(String toEmail, String registrationId, String ticketCode,
+                                            String tierName, String eventStart, int status) throws Exception {
         SingleSendMailRequest request = SingleSendMailRequest.builder()
                 .accountName(accountName)
                 .fromAlias(fromAlias)
                 .addressType(1)
                 .toAddress(toEmail)
-                .subject(getOrderNotificationEmailSubject(status))
-                .htmlBody(getOrderNotificationEmailContent(orderId, sku, specOption, shipByTime, status))
+                .subject(getRegistrationNotificationEmailSubject(status))
+                .htmlBody(getRegistrationNotificationEmailContent(registrationId, ticketCode, tierName, eventStart, status))
                 .replyToAddress(true)
                 .build();
 
         SingleSendMailResponse response = client.singleSendMail(request).get();
-        logger.info("发送订单通知邮件成功, RequestId: {}", response.getBody().getRequestId());
+        logger.info("发送报名通知邮件成功, RequestId: {}", response.getBody().getRequestId());
     }
 
-    private String getOrderNotificationEmailSubject(int status) {
-        // 根据状态码确定订单状态文字
-        String statusText;
-        switch (status) {
-            case 1 -> statusText = "已支付待发货";
-            case 2 -> statusText = "已取消";
-            default -> statusText = "状态未知";
-        }
-        return EmailConstant.APP_NAME + " - 商品订单" + statusText;
+    private String getRegistrationNotificationEmailSubject(int status) {
+        String statusText = switch (status) {
+            case 1 -> "已报名";
+            case 2 -> "已取消";
+            default -> "状态更新";
+        };
+        return EmailConstant.APP_NAME + " - 活动报名" + statusText;
     }
 
-    private String getOrderNotificationEmailContent(String orderId, String sku,
-                                                    String specOption, String shipByTime, int status) {
-        // 根据状态码确定文字和颜色
+    private String getRegistrationNotificationEmailContent(String registrationId, String ticketCode,
+                                                    String tierName, String eventStart, int status) {
         String statusText;
         String statusColor;
         boolean isSucceed;
 
         switch (status) {
             case 1 -> {
-                statusText = "已支付待发货";
-                statusColor = "#67C23A"; // 绿色
+                statusText = "已报名";
+                statusColor = "#67C23A";
                 isSucceed = true;
             }
             case 2 -> {
                 statusText = "已取消";
-                statusColor = "#F56C6C"; // 红色
+                statusColor = "#F56C6C";
                 isSucceed = false;
             }
             default -> {
                 statusText = "未知状态";
-                statusColor = "#E6A23C"; // 橙色警告
+                statusColor = "#E6A23C";
                 isSucceed = false;
             }
         }
@@ -184,38 +181,28 @@ public class EmailUtil {
                 + "<div style=\"display:inline-block;background-color:#ffffff;padding:0;border-radius:8px;"
                 + "box-shadow:0 2px 12px rgba(0,0,0,0.1);max-width:500px;width:90%;"
                 + "font-family:Arial,sans-serif;color:#333;text-align:left;overflow:hidden;\">"
-
                 + "<div style=\"background-color:#409EFF;height:8px;\"></div>"
-
                 + "<div style=\"padding:30px;line-height:1.6;\">"
-
-                + "<h2 style=\"text-align:center;margin-bottom:20px;color:#409EFF;\">SmartShop 商品订单通知</h2>"
-
-                + "<p style=\"font-size:15px;\">尊敬的用户，您的订单状态已更新：</p>"
-
+                + "<h2 style=\"text-align:center;margin-bottom:20px;color:#409EFF;\">CampusClub 活动报名通知</h2>"
+                + "<p style=\"font-size:15px;\">尊敬的同学，您的报名状态已更新：</p>"
                 + "<div style=\"background-color:#f9f9f9;padding:15px 20px;border-radius:6px;margin:20px 0;"
                 + "border-left:5px solid " + statusColor + ";\">"
-
-                + "<p style=\"margin:8px 0;\"><strong>订单编号：</strong><span>" + orderId + "</span></p>"
-                + "<p style=\"margin:8px 0;\"><strong>SKU：</strong><span>" + sku + "</span></p>"
-                + "<p style=\"margin:8px 0;\"><strong>规格：</strong><span>" + specOption + "</span></p>"
-                + "<p style=\"margin:8px 0;\"><strong>预计发货：</strong><span>" + shipByTime + "</span></p>"
-                + "<p style=\"margin:8px 0;\"><strong>订单状态：</strong>"
+                + "<p style=\"margin:8px 0;\"><strong>报名编号：</strong><span>" + registrationId + "</span></p>"
+                + "<p style=\"margin:8px 0;\"><strong>票种编码：</strong><span>" + ticketCode + "</span></p>"
+                + "<p style=\"margin:8px 0;\"><strong>票档：</strong><span>" + tierName + "</span></p>"
+                + "<p style=\"margin:8px 0;\"><strong>活动开始：</strong><span>" + eventStart + "</span></p>"
+                + "<p style=\"margin:8px 0;\"><strong>报名状态：</strong>"
                 + "<span style=\"color:" + statusColor + ";font-weight:bold;\">" + statusText + "</span></p>"
                 + "</div>"
-
                 + "<p style=\"font-size:13px;color:#666;\">"
                 + (isSucceed
-                ? "感谢您选购 SmartShop，我们将尽快为您发货。"
-                : "如需再次购买或咨询售后，欢迎随时联系客服。<br>感谢您对 SmartShop 的支持。")
+                ? "请按时参加活动，现场可能需要核验学生证。"
+                : "如需重新报名或咨询活动详情，欢迎随时联系社团助手。")
                 + "</p>"
-
                 + "<hr style=\"margin:30px 0 20px;border:none;border-top:1px solid #eee;\">"
-
                 + "<p style=\"font-size:12px;color:#aaa;text-align:center;\">"
-                + "本邮件由系统自动发送，请勿直接回复。如有疑问，请联系平台客服。"
+                + "本邮件由系统自动发送，请勿直接回复。如有疑问，请联系 CampusClub 社团助手。"
                 + "</p>"
-
                 + "</div></div></div>";
     }
 }

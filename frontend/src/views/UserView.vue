@@ -31,7 +31,7 @@ const stopPolling = () => {
   }
 };
 
-// 开始轮询（仅人工客服模式）
+// 开始轮询（仅人工咨询模式）
 const startPolling = (conversationId) => {
   stopPolling();
   pollTimer = setInterval(async () => {
@@ -123,7 +123,7 @@ const initConversation = async () => {
       // 如果没有进行中的会话，创建新的会话
       const createResponse = await conversationApi.createConversation({
         userId: currentUserId.value,
-        initialMessage: '您好，欢迎使用智能客服系统，有什么可以帮助您的？'
+        initialMessage: '您好，欢迎使用智能社团助手，有什么可以帮助您的？'
       });
 
       // 保存会话UUID
@@ -132,7 +132,7 @@ const initConversation = async () => {
       // 添加初始消息
       chatMessages.value = [
         {
-          content: '您好，欢迎使用智能客服系统，有什么可以帮助您的？',
+          content: '您好，欢迎使用智能社团助手，有什么可以帮助您的？',
           type: 'ai',
           time: new Date().toLocaleTimeString()
         }
@@ -145,7 +145,7 @@ const initConversation = async () => {
     // 创建本地会话，防止页面崩溃
     chatMessages.value = [
       {
-        content: '欢迎使用智能客服系统，有什么可以帮助您的？(本地模式)',
+        content: '欢迎使用智能社团助手，有什么可以帮助您的？(本地模式)',
         type: 'ai',
         time: new Date().toLocaleTimeString()
       }
@@ -331,11 +331,11 @@ const handleCloseConversation = async () => {
     });
 };
 
-// 处理转人工客服
+// 处理转人工咨询
 const handleTransferToService = async () => {
   ElMessageBox.confirm(
-    '确定要转接到人工客服吗？转接后将由人工客服为您服务。',
-    '转接人工客服',
+    '确定要转接到人工咨询吗？转接后将由人工咨询为您服务。',
+    '转接人工咨询',
     {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
@@ -357,33 +357,33 @@ const handleTransferToService = async () => {
           eventSource = null;
         }
 
-        // 调用后端API转接到人工客服
+        // 调用后端API转接到人工咨询
         const response = await conversationApi.transferConversation(conversationUuid.value, {
-          serviceUserId: null // 系统自动分配客服
+          serviceUserId: null // 系统自动分配社团助手
         });
 
         if (response.code === 200) {
           // 添加系统消息
           chatMessages.value.push({
-            content: '正在为您转接人工客服，请稍候...',
+            content: '正在为您转接人工咨询，请稍候...',
             type: 'system',
             time: new Date().toLocaleTimeString()
           });
 
           // 记录转接消息
-          await logMessage('用户请求转接人工客服', 'service');
+          await logMessage('用户请求转接人工咨询', 'service');
 
           isTransferToService.value = true;
-          // ⭐ 开始轮询客服消息
+          // ⭐ 开始轮询社团助手消息
           startPolling(conversationUuid.value);
 
-          ElMessage.success('已转接到人工客服，请等待客服接入');
+          ElMessage.success('已转接到人工咨询，请等待社团助手接入');
         } else {
           throw new Error(response.message || '转接失败');
         }
       } catch (error) {
-        console.error('转接客服失败:', error);
-        ElMessage.error(error.message || '转接客服失败');
+        console.error('转接社团助手失败:', error);
+        ElMessage.error(error.message || '转接社团助手失败');
       } finally {
         loading.value = false;
       }

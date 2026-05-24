@@ -52,7 +52,7 @@ const closeConversation = () => {
   emit('closeConversation');
 };
 
-// 转接人工客服
+// 转接社团助手
 const transferToService = () => {
   emit('transferToService');
 };
@@ -70,7 +70,7 @@ const transferToService = () => {
         :loading="loading"
         :disabled="disabled"
       >
-        人工客服
+        人工咨询
       </el-button>
       <el-button 
         type="danger" 

@@ -3,7 +3,7 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import HeaderNav from '@/components/common/HeaderNav.vue';
-import { userApi, orderApi, conversationApi } from '@/api';
+import { userApi, registrationApi, conversationApi } from '@/api';
 import { getCurrentUser, isLoggedIn, logout } from '@/utils/auth';
 import { getMemberLevelName } from '@/utils/jwt';
 
@@ -23,7 +23,7 @@ const userInfo = reactive({
   realName: '',
   idCard: '',
   memberLevel: 1,
-  memberLevelName: '普通会员'
+  memberLevelName: '新成员'
 });
 
 // 是否为普通用户
@@ -109,32 +109,30 @@ const passwordRules = {
   ]
 };
 
-// 订单数据
-const orders = ref([]);
-
-// 会话数据
+// 报名数据
+const registrations = ref([]);
 const conversations = ref([]);
-
-// 订单详情相关
 const detailDialogVisible = ref(false);
 const detailLoading = ref(false);
-const orderDetail = reactive({
-  orderId: '',
+
+const registrationDetail = reactive({
+  registrationId: '',
   userId: '',
   username: '',
   realName: '',
   phone: '',
-  productId: '',
-  sku: '',
-  productName: '',
-  brand: '',
-  category: '',
-  shipFrom: '',
-  availableFrom: '',
-  shipBy: '',
-  spec: '',
-  price: '',
-  specOption: '',
+  activityId: '',
+  ticketCode: '',
+  activityTitle: '',
+  clubName: '',
+  activityType: '',
+  venue: '',
+  registrationStart: '',
+  eventStart: '',
+  eventEnd: '',
+  tierName: '',
+  unitPrice: 0,
+  totalPrice: 0,
   status: 0,
   createdAt: ''
 });
@@ -194,21 +192,15 @@ const getUserData = async () => {
       throw new Error(response?.message || '获取用户信息失败');
     }
     
-    // 如果是普通用户，获取订单和会话数据
+    // 如果是普通用户，获取报名和会话数据
     if (isNormalUser.value) {
-      // 获取订单数据
-      const orderResponse = await orderApi.listOrdersWithDetail(currentUser.id);
-      if (orderResponse && orderResponse.code === 200) {
-        // 处理订单数据，添加状态文本
-        orders.value = (orderResponse.data || []).map(order => {
-          return {
-            ...order,
-            statusText: order.status === 1 ? '已支付待发货' : order.status === 2 ? '已取消' : '未知'
-          };
-        });
-        console.log('获取到的订单数据:', orders.value);
-      } else {
-        console.error('获取订单数据失败:', orderResponse);
+      // 获取报名数据
+      const regResponse = await registrationApi.listRegistrationsWithDetail(currentUser.id);
+      if (regResponse && regResponse.code === 200) {
+        registrations.value = (regResponse.data || []).map((reg) => ({
+          ...reg,
+          statusText: reg.status === 1 ? '已报名' : reg.status === 2 ? '已取消' : reg.status === 3 ? '已参加' : '未知'
+        }));
       }
       
       // 获取会话数据
@@ -351,52 +343,42 @@ const getUserName = (conversation) => {
 
 const getServiceName = (conversation) => {
   return conversation.serviceUser ? conversation.serviceUser.username : 
-         conversation.serviceUserName || '未知客服';
+         conversation.serviceUserName || '社团助手';
 };
 
-// 查看订单详情
-const viewOrderDetail = async (orderId) => {
+// 查看报名详情
+const viewRegistrationDetail = async (registrationId) => {
   try {
     detailLoading.value = true;
     detailDialogVisible.value = true;
-    
-    const response = await orderApi.getOrderDetail(orderId);
-    
+    const response = await registrationApi.getRegistrationDetail(registrationId);
     if (response && response.code === 200 && response.data) {
-      // 清空之前的数据
-      Object.keys(orderDetail).forEach(key => {
-        orderDetail[key] = '';
-      });
-      
-      // 填充新数据
-      Object.assign(orderDetail, {
-        orderId: response.data.orderId || orderId,
+      Object.assign(registrationDetail, {
+        registrationId: response.data.registrationId || registrationId,
         userId: response.data.userId || '',
         username: response.data.username || '',
         realName: response.data.realName || '',
         phone: response.data.phone || '',
-        productId: response.data.productId || '',
-        sku: response.data.sku || '',
-        productName: response.data.productName || '',
-        brand: response.data.brand || '',
-        category: response.data.category || '',
-        shipFrom: response.data.shipFrom || '',
-        availableFrom: response.data.availableFrom || '',
-        shipBy: response.data.shipBy || '',
-        spec: response.data.spec || '',
-        price: response.data.price || '',
-        specOption: response.data.specOption || '',
+        activityId: response.data.activityId || '',
+        ticketCode: response.data.ticketCode || '',
+        activityTitle: response.data.activityTitle || '',
+        clubName: response.data.clubName || '',
+        activityType: response.data.activityType || '',
+        venue: response.data.venue || '',
+        registrationStart: response.data.registrationStart || '',
+        eventStart: response.data.eventStart || '',
+        eventEnd: response.data.eventEnd || '',
+        tierName: response.data.tierName || '',
+        unitPrice: response.data.unitPrice ?? 0,
+        totalPrice: response.data.totalPrice ?? 0,
         status: response.data.status || 0,
         createdAt: response.data.createdAt || ''
       });
-      
-      console.log('处理后的订单详情:', orderDetail);
     } else {
-      throw new Error(response?.message || '获取订单详情失败');
+      throw new Error(response?.message || '获取报名详情失败');
     }
   } catch (error) {
-    console.error('获取订单详情失败:', error);
-    ElMessage.error(error.message || '获取订单详情失败');
+    ElMessage.error(error.message || '获取报名详情失败');
     detailDialogVisible.value = false;
   } finally {
     detailLoading.value = false;
@@ -468,19 +450,21 @@ const formatDateTime = (dateTimeStr) => {
   }
 };
 
-// 获取订单状态名称
+// 获取报名状态名称
 const getStatusName = (status) => {
   switch (status) {
     case 1:
-      return '已支付待发货';
+      return '已报名';
     case 2:
       return '已取消';
+    case 3:
+      return '已参加';
     default:
       return '未知状态';
   }
 };
 
-// 获取订单状态对应的标签类型
+// 获取报名状态对应的标签类型
 const getStatusType = (status) => {
   switch (status) {
     case 1:
@@ -565,7 +549,7 @@ onMounted(() => {
                   <div class="info-value">{{ userInfo.joinTime }}</div>
                 </div>
                 <div class="info-row">
-                  <div class="info-label">会员等级</div>
+                  <div class="info-label">社团活跃度</div>
                   <div class="info-value">
                     <el-tag 
                       :type="memberLevelType" 
@@ -577,8 +561,9 @@ onMounted(() => {
                     </el-tag>
                     <div class="member-benefits">
                       <span v-if="userInfo.memberLevel >= 2">{{ 10 - userInfo.memberLevel }}折</span>
-                      <span v-if="userInfo.memberLevel >= 3">行李+{{ userInfo.memberLevel - 1 }}件</span>
-                      <span v-if="userInfo.memberLevel >= 4">优先登机</span>
+                      <span v-if="userInfo.memberLevel >= 2">活动提醒</span>
+                      <span v-if="userInfo.memberLevel >= 3">优先报名</span>
+                      <span v-if="userInfo.memberLevel >= 4">专属咨询</span>
                       <span v-if="userInfo.memberLevel >= 5">专属客服</span>
                     </div>
                   </div>
@@ -620,7 +605,7 @@ onMounted(() => {
                   <div class="info-value readonly">{{ userInfo.joinTime }}</div>
                 </div>
                 <div class="info-row">
-                  <div class="info-label">会员等级</div>
+                  <div class="info-label">社团活跃度</div>
                   <div class="info-value readonly">
                     <el-tag 
                       :type="memberLevelType" 
@@ -647,27 +632,20 @@ onMounted(() => {
             </div>
           </el-tab-pane>
           
-          <!-- 我的订单标签页 - 只有普通用户才有 -->
-          <el-tab-pane label="我的订单" name="orders" v-if="isNormalUser">
-            <div class="orders-container">
-              <el-table :data="orders" style="width: 100%">
-                <el-table-column prop="id" label="订单号" min-width="120" />
-                <el-table-column prop="productId" label="商品ID" min-width="120" />
-                <el-table-column prop="specOption" label="选购规格" min-width="120" />
+          <el-tab-pane label="我的报名" name="registrations" v-if="isNormalUser">
+            <div class="registrations-container">
+              <el-table :data="registrations" style="width: 100%">
+                <el-table-column prop="id" label="报名号" min-width="120" />
+                <el-table-column prop="activityId" label="活动ID" min-width="120" />
                 <el-table-column prop="statusText" label="状态" min-width="120">
                   <template #default="scope">
-                    <el-tag
-                      :type="scope.row.status === 1 ? 'success' : 
-                             scope.row.status === 2 ? 'danger' : 'info'"
-                    >
-                      {{ scope.row.statusText }}
-                    </el-tag>
+                    <el-tag :type="getStatusType(scope.row.status)">{{ scope.row.statusText }}</el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="createdAt" label="创建时间" min-width="180" />
+                <el-table-column prop="createdAt" label="报名时间" min-width="180" />
                 <el-table-column label="操作" min-width="120" fixed="right">
                   <template #default="scope">
-                    <el-button size="small" @click="viewOrderDetail(scope.row.id)">查看详情</el-button>
+                    <el-button size="small" @click="viewRegistrationDetail(scope.row.id)">查看详情</el-button>
                   </template>
                 </el-table-column>
               </el-table>
@@ -678,7 +656,7 @@ onMounted(() => {
           <el-tab-pane label="历史会话" name="conversations" v-if="isNormalUser">
             <div class="conversations-container">
               <el-table :data="conversations" style="width: 100%">
-                <el-table-column prop="serviceUserName" label="客服" min-width="120" />
+                <el-table-column prop="serviceUserName" label="社团助手" min-width="120" />
                 <el-table-column prop="lastMessage" label="最后消息" min-width="200" show-overflow-tooltip />
                 <el-table-column prop="updatedAt" label="时间" min-width="160" />
                 <el-table-column prop="status" label="状态" min-width="120">
@@ -746,44 +724,24 @@ onMounted(() => {
       </template>
     </el-dialog>
     
-    <!-- 订单详情弹窗 -->
-    <el-dialog
-      v-model="detailDialogVisible"
-      title="订单详情"
-      width="650px"
-      destroy-on-close
-    >
+    <el-dialog v-model="detailDialogVisible" title="报名详情" width="650px" destroy-on-close>
       <div v-loading="detailLoading">
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="订单ID" :span="2">{{ orderDetail.orderId }}</el-descriptions-item>
-          <el-descriptions-item label="选购规格">{{ orderDetail.specOption }}</el-descriptions-item>
-          <el-descriptions-item label="订单状态">
-            <el-tag :type="getStatusType(orderDetail.status)">{{ getStatusName(orderDetail.status) }}</el-tag>
+          <el-descriptions-item label="报名ID" :span="2">{{ registrationDetail.registrationId }}</el-descriptions-item>
+          <el-descriptions-item label="票档">{{ registrationDetail.tierName }}</el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="getStatusType(registrationDetail.status)">{{ getStatusName(registrationDetail.status) }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="下单时间" :span="2">{{ formatDateTime(orderDetail.createdAt) }}</el-descriptions-item>
-          
-          <el-descriptions-item label="用户ID">{{ orderDetail.userId }}</el-descriptions-item>
-          <el-descriptions-item label="用户名">{{ orderDetail.username }}</el-descriptions-item>
-          <el-descriptions-item label="真实姓名">{{ orderDetail.realName || '未提供' }}</el-descriptions-item>
-          <el-descriptions-item label="联系电话">{{ orderDetail.phone || '未提供' }}</el-descriptions-item>
-          
-          <el-descriptions-item label="商品信息" :span="2" class="product-info-header">
-            <div class="product-header">
-              <span class="product-sku">{{ orderDetail.sku }}</span>
-              <span class="brand">{{ orderDetail.brand }}</span>
-            </div>
-            <div class="product-title">{{ orderDetail.productName }}</div>
-          </el-descriptions-item>
-
-          <el-descriptions-item label="类目">{{ orderDetail.category }}</el-descriptions-item>
-          <el-descriptions-item label="发货地">{{ orderDetail.shipFrom }}</el-descriptions-item>
-          <el-descriptions-item label="开售时间">{{ formatDateTime(orderDetail.availableFrom) }}</el-descriptions-item>
-          <el-descriptions-item label="预计发货">{{ formatDateTime(orderDetail.shipBy) }}</el-descriptions-item>
-          <el-descriptions-item label="规格说明">{{ orderDetail.spec }}</el-descriptions-item>
-          <el-descriptions-item label="单价">¥{{ orderDetail.price }}</el-descriptions-item>
+          <el-descriptions-item label="报名时间" :span="2">{{ formatDateTime(registrationDetail.createdAt) }}</el-descriptions-item>
+          <el-descriptions-item label="活动" :span="2">{{ registrationDetail.activityTitle }}</el-descriptions-item>
+          <el-descriptions-item label="社团">{{ registrationDetail.clubName }}</el-descriptions-item>
+          <el-descriptions-item label="类型">{{ registrationDetail.activityType }}</el-descriptions-item>
+          <el-descriptions-item label="地点">{{ registrationDetail.venue }}</el-descriptions-item>
+          <el-descriptions-item label="活动开始">{{ formatDateTime(registrationDetail.eventStart) }}</el-descriptions-item>
+          <el-descriptions-item label="票价">¥{{ registrationDetail.unitPrice }}</el-descriptions-item>
+          <el-descriptions-item label="总价">¥{{ registrationDetail.totalPrice }}</el-descriptions-item>
         </el-descriptions>
       </div>
-      
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="detailDialogVisible = false">关闭</el-button>
@@ -1054,7 +1012,7 @@ onMounted(() => {
   margin-top: 20px;
 }
 
-.orders-container,
+.registrations-container,
 .conversations-container {
   margin: 20px 0;
   width: 100%;
@@ -1062,7 +1020,7 @@ onMounted(() => {
 }
 
 /* 确保表格占满容器 */
-.orders-container .el-table,
+.registrations-container .el-table,
 .conversations-container .el-table {
   width: 100% !important;
 }
@@ -1075,32 +1033,6 @@ onMounted(() => {
 
 .el-table .el-table__row:hover {
   background-color: rgba(37, 99, 235, 0.06);
-}
-
-/* 订单详情样式 */
-.product-info-header {
-  background-color: var(--sa-bg-elevated, #f8fafc);
-}
-
-.product-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.product-sku {
-  font-weight: bold;
-  color: var(--sa-primary-bright, #2563eb);
-  font-size: 16px;
-}
-
-.brand {
-  color: var(--sa-text-muted, #475569);
-}
-
-.product-title {
-  margin-top: 6px;
-  font-weight: normal;
 }
 
 .conversation-detail {
