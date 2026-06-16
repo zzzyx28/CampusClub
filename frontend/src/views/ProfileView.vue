@@ -801,53 +801,38 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background: radial-gradient(900px 420px at 50% 0%, rgba(37, 99, 235, 0.1), transparent 55%),
-    var(--sa-bg, #eff6ff);
+  background: var(--cc-paper);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(200, 75, 49, 0.06), transparent 55%);
   box-sizing: border-box;
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
 }
 
 .header {
-  height: 64px;
-  background: var(--sa-header-gradient, linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%));
-  color: white;
+  height: var(--cc-header-h, 60px);
+  background: var(--cc-surface);
+  color: var(--cc-ink);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  box-shadow: 0 4px 24px rgba(30, 58, 138, 0.22);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--cc-border);
+  box-shadow: var(--sa-shadow-sm);
   width: 100%;
   flex-shrink: 0;
 }
 
-.back-button {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 8px 10px;
-  margin-left: -10px;
-  border-radius: 10px;
-  transition: background-color 0.2s ease;
-}
-
 .back-button:hover {
-  background-color: rgba(255, 255, 255, 0.12);
-}
-
-.back-button span {
-  margin-left: 5px;
+  background-color: var(--cc-paper);
 }
 
 .page-title {
-  font-family: var(--sa-font-heading, 'Poppins', sans-serif);
+  font-family: var(--sa-font-heading);
   font-size: 1.125rem;
   font-weight: 600;
   letter-spacing: -0.02em;
+  color: var(--cc-ink);
 }
 
 .placeholder {
@@ -953,7 +938,7 @@ onMounted(() => {
 .member-benefits span {
   font-size: 12px;
   color: var(--sa-text-muted, #475569);
-  background-color: rgba(37, 99, 235, 0.08);
+  background-color: var(--cc-accent-soft);
   padding: 2px 8px;
   border-radius: 6px;
   display: inline-flex;
@@ -1032,7 +1017,7 @@ onMounted(() => {
 }
 
 .el-table .el-table__row:hover {
-  background-color: rgba(37, 99, 235, 0.06);
+  background-color: var(--cc-paper);
 }
 
 .conversation-detail {
@@ -1059,7 +1044,7 @@ onMounted(() => {
 
 .user-message {
   align-self: flex-end;
-  background-color: rgba(37, 99, 235, 0.12);
+  background-color: var(--cc-accent-soft);
   border: 1px solid rgba(37, 99, 235, 0.2);
 }
 

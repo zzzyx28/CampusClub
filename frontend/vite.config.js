@@ -7,9 +7,6 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
-  const baseApi = env.VITE_APP_BASE_API || 'http://localhost:8080/api'
-  const apiPath = baseApi.substring(baseApi.lastIndexOf('/'))
-  const targetServer = baseApi.substring(0, baseApi.lastIndexOf('/'))
 
   const plugins = [vue()]
   if (mode === 'development') {
@@ -24,15 +21,14 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: parseInt(env.PORT || '5173'),
+      port: parseInt(env.PORT || '5175'),
       open: true,
       proxy: {
-        [apiPath]: {
-          target: targetServer,
+        '/api': {
+          target: env.VITE_PROXY_TARGET || 'http://localhost:8080',
           changeOrigin: true,
-          rewrite: (path) => path.replace(new RegExp(`^${apiPath}`), '')
-        }
-      }
+        },
+      },
     }
   }
 })

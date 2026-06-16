@@ -1,50 +1,30 @@
 <script setup>
-import { defineProps, defineEmits, computed } from 'vue';
-import * as ElementPlusIconsVue from '@element-plus/icons-vue';
+import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps({
   menuItems: {
     type: Array,
-    required: true
+    required: true,
   },
   activeMenu: {
     type: String,
-    default: ''
-  }
+    default: '',
+  },
 });
 
 const emit = defineEmits(['select']);
 
-// 菜单项选择
 const handleSelect = (index) => {
   emit('select', index);
-};
-
-const isActivityItem = (item) => {
-  return item.index === 'activities' || item.title.includes('活动');
 };
 </script>
 
 <template>
   <div class="side-menu">
-    <el-menu
-      :default-active="activeMenu"
-      class="menu"
-      @select="handleSelect"
-    >
-      <el-menu-item 
-        v-for="item in menuItems" 
-        :key="item.index" 
-        :index="item.index"
-      >
-        <template v-if="isActivityItem(item)">
-          <div class="custom-icon-wrapper">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="custom-icon">
-              <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path>
-            </svg>
-          </div>
-        </template>
-        <el-icon v-else-if="item.icon">
+    <div class="menu-label">管理菜单</div>
+    <el-menu :default-active="activeMenu" class="menu" @select="handleSelect">
+      <el-menu-item v-for="item in menuItems" :key="item.index" :index="item.index">
+        <el-icon v-if="item.icon">
           <component :is="item.icon" />
         </el-icon>
         <span>{{ item.title }}</span>
@@ -56,60 +36,52 @@ const isActivityItem = (item) => {
 <style scoped>
 .side-menu {
   height: 100%;
-  background: var(--sa-surface, #fff);
+  background: var(--cc-surface);
+  padding: 0.75rem 0;
+}
+
+.menu-label {
+  padding: 0.5rem 1.25rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cc-muted);
 }
 
 .menu {
-  height: 100%;
+  height: calc(100% - 2rem);
   border-right: none;
   background: transparent;
-  padding: 8px 0;
+  padding: 0 0.5rem;
 }
 
 :deep(.el-menu-item) {
-  height: 48px;
-  line-height: 48px;
-  margin: 4px 10px;
-  border-radius: 10px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  height: 44px;
+  line-height: 44px;
+  margin: 2px 0;
+  border-radius: var(--sa-radius-sm);
+  transition: var(--sa-transition);
+  font-weight: 500;
+  color: var(--cc-ink-soft);
 }
 
 :deep(.el-menu-item:hover) {
-  background-color: rgba(37, 99, 235, 0.06) !important;
+  background-color: var(--cc-paper) !important;
+  color: var(--cc-ink) !important;
 }
 
 :deep(.el-menu-item.is-active) {
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.14), rgba(37, 99, 235, 0.04)) !important;
-  color: var(--sa-primary-bright, #2563eb) !important;
+  background: var(--cc-accent-soft) !important;
+  color: var(--cc-accent) !important;
   font-weight: 600;
+  border-left: 3px solid var(--cc-accent);
+  padding-left: calc(var(--el-menu-base-level-padding) - 3px) !important;
 }
 
 :deep(.el-icon) {
-  margin-right: 8px;
-  font-size: 18px;
-  color: var(--sa-text-muted, #475569);
+  margin-right: 10px;
+  font-size: 17px;
+  color: inherit;
 }
-
-:deep(.el-menu-item.is-active .el-icon) {
-  color: var(--sa-primary-bright, #2563eb);
-}
-
-.custom-icon-wrapper {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 8px;
-  width: 24px;
-  height: 24px;
-}
-
-.custom-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--sa-text-muted, #475569);
-}
-
-:deep(.el-menu-item.is-active) .custom-icon {
-  color: var(--sa-primary-bright, #2563eb);
-}
-</style> 
+</style>

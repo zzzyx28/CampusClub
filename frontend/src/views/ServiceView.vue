@@ -600,40 +600,56 @@ onMounted(initData);
 .main-content {
   flex: 1;
   display: flex;
-  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 45%);
+  background: var(--cc-paper);
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
-  height: calc(100% - 64px);
+  height: calc(100% - var(--cc-header-h, 60px));
 }
 
-/* 左侧区域样式 */
 .left-section {
   width: 60%;
   height: 100%;
   display: flex;
-  border-right: 1px solid var(--sa-border, #e2e8f0);
+  border-right: 1px solid var(--cc-border);
 }
 
 .conversation-list {
   width: 280px;
   height: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  border-right: 1px solid var(--sa-border, #e2e8f0);
+  background: var(--cc-surface);
+  border-right: 1px solid var(--cc-border);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .list-title {
-  padding: 16px 18px;
+  padding: 1rem 1.125rem;
   margin: 0;
-  font-size: 15px;
+  font-size: 0.95rem;
   font-weight: 600;
-  font-family: var(--sa-font-heading, 'Poppins', sans-serif);
-  border-bottom: 1px solid var(--sa-border, #e2e8f0);
-  background: var(--sa-bg-elevated, #f8fafc);
-  color: var(--sa-text, #0f172a);
+  font-family: var(--sa-font-heading);
+  border-bottom: 1px solid var(--cc-border);
+  background: var(--cc-paper);
+  color: var(--cc-ink);
+}
+
+.chat-header {
+  height: 56px;
+  padding: 0 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--cc-surface);
+  border-bottom: 1px solid var(--cc-border);
+}
+
+.customer-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--cc-ink);
+  font-family: var(--sa-font-heading);
 }
 
 .chat-area {
@@ -642,22 +658,6 @@ onMounted(initData);
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-}
-
-.chat-header {
-  height: 60px;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(255, 255, 255, 0.98);
-  border-bottom: 1px solid var(--sa-border, #e2e8f0);
-}
-
-.customer-name {
-  font-weight: 600;
-  font-size: 16px;
-  color: var(--sa-text, #0f172a);
 }
 
 .close-chat-btn {
@@ -694,9 +694,9 @@ onMounted(initData);
 
 .customer-info-area {
   flex: 1;
-  padding: 20px;
-  background-color: white;
-  border-bottom: 1px solid #ebeef5;
+  padding: 1.25rem;
+  background-color: var(--cc-surface);
+  border-bottom: 1px solid var(--cc-border);
   overflow: auto;
 }
 

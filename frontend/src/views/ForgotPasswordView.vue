@@ -136,7 +136,7 @@ const goToLogin = () => {
 </script>
 
 <template>
-  <div class="forgot-container">
+  <div class="forgot-container cc-page-bg">
     <div class="forgot-box">
       <div class="forgot-header">
         <h2>找回密码</h2>
@@ -243,27 +243,20 @@ const goToLogin = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(900px 480px at 50% -20%, rgba(37, 99, 235, 0.12), transparent 55%),
-    var(--sa-bg, #eff6ff);
   box-sizing: border-box;
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 20px;
+  inset: 0;
+  padding: 1.25rem;
 }
 
 .forgot-box {
   width: 100%;
   max-width: 520px;
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: var(--sa-radius-lg, 16px);
-  padding: 40px;
-  box-shadow: var(--sa-shadow-md, 0 10px 40px rgba(15, 23, 42, 0.08));
-  border: 1px solid var(--sa-border, #e2e8f0);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--cc-surface);
+  border-radius: var(--sa-radius-lg);
+  padding: 2.5rem;
+  box-shadow: var(--sa-shadow-md);
+  border: 1px solid var(--cc-border);
 }
 
 .forgot-header {

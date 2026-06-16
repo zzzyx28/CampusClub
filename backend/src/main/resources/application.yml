@@ -21,6 +21,7 @@ management:
 app:
   seed:
     dev-data: true
+    sql-location: classpath:db/seed/dev-data.sql
   jwt:
     secret: change-me-in-local-yml-must-be-at-least-32-chars!!
     expire-ms: 43200000

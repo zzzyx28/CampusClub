@@ -1,37 +1,63 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&display=swap');
 
-/* CampusClub 设计令牌 — 校园社团活动：专业、可信、清爽 */
+/* CampusClub — Campus Chronicle 设计系统 */
 :root {
-  --sa-primary: #1e3a8a;
-  --sa-primary-bright: #2563eb;
-  --sa-secondary: #3b82f6;
-  --sa-cta: #f97316;
-  --sa-bg: #eff6ff;
-  --sa-bg-elevated: #f8fafc;
-  --sa-surface: #ffffff;
-  --sa-text: #0f172a;
-  --sa-text-muted: #475569;
-  --sa-border: #e2e8f0;
-  --sa-header-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 52%, #1d4ed8 100%);
-  --sa-radius-lg: 16px;
-  --sa-radius-md: 12px;
-  --sa-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --sa-shadow-md: 0 10px 40px rgba(15, 23, 42, 0.08);
-  --sa-shadow-card: 0 4px 24px rgba(30, 58, 138, 0.07);
-  --sa-font-heading: 'Poppins', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  --sa-font-body: 'Open Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  --sa-transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease,
-    box-shadow 0.2s ease, opacity 0.2s ease;
+  --cc-ink: #1a1814;
+  --cc-ink-soft: #3d3935;
+  --cc-paper: #f6f3ed;
+  --cc-paper-deep: #ebe6dc;
+  --cc-surface: #fffcf7;
+  --cc-border: #e5dfd3;
+  --cc-border-strong: #cfc6b6;
+  --cc-muted: #7a746c;
+  --cc-accent: #c84b31;
+  --cc-accent-hover: #a83d28;
+  --cc-accent-soft: #fdf0ec;
+  --cc-green: #2f5d4e;
+  --cc-green-hover: #244a3e;
+  --cc-green-soft: #edf4f0;
+  --cc-gold: #b8860b;
+  --cc-header-h: 60px;
 
-  /* Element Plus主色与派生（在 ep 样式之后由本文件覆盖） */
-  --el-color-primary: #2563eb;
-  --el-color-primary-light-3: #60a5fa;
-  --el-color-primary-light-5: #93c5fd;
-  --el-color-primary-light-7: #bfdbfe;
-  --el-color-primary-light-8: #dbeafe;
-  --el-color-primary-light-9: #eff6ff;
-  --el-color-primary-dark-2: #1d4ed8;
+  --sa-primary: var(--cc-green);
+  --sa-primary-bright: var(--cc-accent);
+  --sa-secondary: var(--cc-green);
+  --sa-cta: var(--cc-accent);
+  --sa-bg: var(--cc-paper);
+  --sa-bg-elevated: var(--cc-paper-deep);
+  --sa-surface: var(--cc-surface);
+  --sa-text: var(--cc-ink);
+  --sa-text-muted: var(--cc-muted);
+  --sa-border: var(--cc-border);
+  --sa-header-gradient: linear-gradient(145deg, var(--cc-accent) 0%, #a83d28 100%);
+  --sa-radius-lg: 18px;
+  --sa-radius-md: 12px;
+  --sa-radius-sm: 8px;
+  --sa-shadow-sm: 0 1px 2px rgba(26, 24, 20, 0.05);
+  --sa-shadow-md: 0 12px 40px rgba(26, 24, 20, 0.09);
+  --sa-shadow-card: 0 4px 20px rgba(26, 24, 20, 0.06);
+  --sa-font-heading: 'Fraunces', 'Songti SC', 'SimSun', serif;
+  --sa-font-body: 'DM Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --sa-transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease, transform 0.2s ease;
+
+  --el-color-primary: #c84b31;
+  --el-color-primary-light-3: #d97a66;
+  --el-color-primary-light-5: #e8a898;
+  --el-color-primary-light-7: #f3cfc6;
+  --el-color-primary-light-8: #f9e5e0;
+  --el-color-primary-light-9: #fdf0ec;
+  --el-color-primary-dark-2: #a83d28;
+  --el-color-success: #2f5d4e;
+  --el-color-success-light-9: #edf4f0;
   --el-border-radius-base: 10px;
+  --el-font-family: var(--sa-font-body);
+  --el-text-color-primary: var(--cc-ink);
+  --el-text-color-regular: var(--cc-ink-soft);
+  --el-bg-color: var(--cc-surface);
+  --el-fill-color-blank: var(--cc-surface);
+  --el-border-color: var(--cc-border);
+  --el-border-color-light: var(--cc-border);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -60,6 +86,7 @@ body {
   color: var(--sa-text);
   background-color: var(--sa-bg);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #app {
@@ -77,60 +104,133 @@ h6 {
   font-family: var(--sa-font-heading);
   font-weight: 600;
   color: var(--sa-text);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 a {
   text-decoration: none;
-  color: var(--sa-primary-bright);
+  color: var(--cc-accent);
   transition: var(--sa-transition);
 }
 
 a:hover {
-  color: var(--sa-primary);
+  color: var(--cc-accent-hover);
 }
 
-/* 全局卡片与表格轻量统一 */
+/* 全局页面纹理背景 */
+.cc-page-bg {
+  background-color: var(--cc-paper);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 100% 0%, rgba(200, 75, 49, 0.07), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(47, 93, 78, 0.06), transparent 50%);
+}
+
+.cc-page-title {
+  margin-bottom: 1.25rem;
+  font-family: var(--sa-font-heading);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--cc-ink);
+  letter-spacing: -0.02em;
+}
+
+.cc-page-title::after {
+  content: '';
+  display: block;
+  width: 2.5rem;
+  height: 3px;
+  margin-top: 0.5rem;
+  background: var(--cc-accent);
+  border-radius: 2px;
+}
+
+/* Element Plus 全局微调 */
 .el-card {
   border-radius: var(--sa-radius-md) !important;
   border: 1px solid var(--sa-border) !important;
   box-shadow: var(--sa-shadow-sm) !important;
+  background: var(--cc-surface) !important;
+  --el-card-border-color: var(--cc-border);
 }
 
 .el-button {
   font-weight: 600;
+  font-family: var(--sa-font-body);
   transition: var(--sa-transition);
+  border-radius: var(--sa-radius-sm) !important;
 }
 
 .el-button--primary {
-  --el-button-hover-bg-color: #1d4ed8;
-  --el-button-hover-border-color: #1d4ed8;
+  --el-button-bg-color: var(--cc-accent);
+  --el-button-border-color: var(--cc-accent);
+  --el-button-hover-bg-color: var(--cc-accent-hover);
+  --el-button-hover-border-color: var(--cc-accent-hover);
+  --el-button-active-bg-color: var(--cc-accent-hover);
+  --el-button-active-border-color: var(--cc-accent-hover);
 }
 
-/* 滚动条 */
+.el-input__wrapper,
+.el-textarea__inner {
+  border-radius: var(--sa-radius-sm) !important;
+  box-shadow: 0 0 0 1px var(--cc-border) inset !important;
+  background: var(--cc-surface) !important;
+  transition: box-shadow 0.2s ease !important;
+}
+
+.el-input__wrapper:hover,
+.el-textarea__inner:hover {
+  box-shadow: 0 0 0 1px var(--cc-border-strong) inset !important;
+}
+
+.el-input__wrapper.is-focus,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 2px rgba(200, 75, 49, 0.35) inset !important;
+}
+
+.el-table {
+  --el-table-border-color: var(--cc-border);
+  --el-table-header-bg-color: var(--cc-paper-deep);
+  --el-table-row-hover-bg-color: var(--cc-accent-soft);
+  border-radius: var(--sa-radius-md);
+  overflow: hidden;
+}
+
+.el-table th.el-table__cell {
+  font-weight: 600;
+  color: var(--cc-ink-soft);
+  font-size: 13px;
+}
+
+.el-dialog {
+  border-radius: var(--sa-radius-lg) !important;
+  overflow: hidden;
+}
+
+.el-menu {
+  border: none !important;
+  background: transparent !important;
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #94a3b8;
+  background-color: var(--cc-border-strong);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #64748b;
+  background-color: var(--cc-muted);
 }
 
 ::-webkit-scrollbar-track {
-  background-color: rgba(226, 232, 240, 0.6);
+  background-color: transparent;
 }
 
 @media (min-width: 1024px) {
-  body {
-    display: block;
-  }
-
+  body,
   #app {
     display: block;
     width: 100%;

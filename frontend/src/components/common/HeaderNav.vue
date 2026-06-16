@@ -3,101 +3,83 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { getCurrentUser, logout, isLoggedIn } from '@/utils/auth';
+import logoUrl from '@/assets/logo.svg';
 
 const router = useRouter();
 const userInfo = ref(null);
 
-// 初始化获取用户信息
 onMounted(() => {
   checkLoginStatus();
 });
 
-// 检查登录状态
 const checkLoginStatus = () => {
   if (!isLoggedIn()) {
     userInfo.value = null;
     return;
   }
-  
-  // 获取当前登录用户信息
   userInfo.value = getCurrentUser();
 };
 
-// 处理退出登录
 const handleLogout = () => {
-  ElMessageBox.confirm(
-    '确定要退出登录吗？',
-    '提示',
-    {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
-    // 调用退出登录函数
-    logout();
-    
-    // 提示用户退出成功
-    ElMessage.success('退出登录成功');
-    
-    // 重置用户信息
-    userInfo.value = null;
-    
-    // 重定向到登录页
-    router.push('/login');
-  }).catch(() => {
-    // 用户取消退出
-  });
+  ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+    confirmButtonText: '确认',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(() => {
+      logout();
+      ElMessage.success('退出登录成功');
+      userInfo.value = null;
+      router.push('/login');
+    })
+    .catch(() => {});
 };
 
-// 返回首页
 const goHome = () => {
-  router.push('/');
+  const user = getCurrentUser();
+  if (user?.role === 'admin') router.push('/admin');
+  else if (user?.role === 'service') router.push('/service');
+  else if (user?.role === 'user') router.push('/user');
+  else router.push('/login');
 };
 
-// 转到个人中心
-const goToProfile = () => {
-  router.push('/profile');
-};
-
-// 转到登录页
-const goToLogin = () => {
-  router.push('/login');
-};
+const goToProfile = () => router.push('/profile');
+const goToLogin = () => router.push('/login');
 </script>
 
 <template>
   <header class="header">
     <div class="logo" @click="goHome">
-      <img src="@/assets/logo.png" alt="CampusClub" class="logo-img" />
-      <span class="logo-text">CampusClub 校园社团助手</span>
+      <img :src="logoUrl" alt="CampusClub" class="logo-img" />
+      <div class="logo-text-group">
+        <span class="logo-text">CampusClub</span>
+        <span class="logo-sub">校园社团助手</span>
+      </div>
     </div>
-    
+
     <div class="user-area">
       <template v-if="userInfo">
-        <div class="user-info-dropdown">
-          <el-dropdown trigger="click">
-            <span class="user-info-btn">
-              <el-avatar :size="30" icon="User" />
-              <span class="username">{{ userInfo.username }}</span>
-              <el-icon><arrow-down /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="goToProfile">
-                  <el-icon><user /></el-icon>个人中心
-                </el-dropdown-item>
-                <el-dropdown-item divided @click="handleLogout" class="logout-item">
-                  <el-icon class="logout-icon"><switch-button /></el-icon>
-                  <span class="logout-text">退出登录</span>
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
+        <el-dropdown trigger="click">
+          <span class="user-info-btn">
+            <el-avatar :size="32" class="user-avatar">{{ userInfo.username?.[0]?.toUpperCase() }}</el-avatar>
+            <span class="username">{{ userInfo.username }}</span>
+            <el-icon><arrow-down /></el-icon>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="goToProfile">
+                <el-icon><user /></el-icon>个人中心
+              </el-dropdown-item>
+              <el-dropdown-item divided @click="handleLogout" class="logout-item">
+                <el-icon class="logout-icon"><switch-button /></el-icon>
+                <span class="logout-text">退出登录</span>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </template>
       <template v-else>
-        <el-button class="login-cta" round @click="goToLogin">登录 / 注册</el-button>
+        <el-button class="login-cta" @click="goToLogin">登录 / 注册</el-button>
       </template>
     </div>
   </header>
@@ -108,60 +90,64 @@ const goToLogin = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
-  padding: 0 28px;
-  background: var(--sa-header-gradient, linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%));
-  color: #fff;
-  box-shadow: 0 4px 24px rgba(30, 58, 138, 0.25);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  height: var(--cc-header-h, 60px);
+  padding: 0 1.5rem;
+  background: var(--cc-surface);
+  color: var(--cc-ink);
+  border-bottom: 1px solid var(--cc-border);
+  box-shadow: var(--sa-shadow-sm);
   flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 1.5rem;
+  width: 3rem;
+  height: 2px;
+  background: var(--cc-accent);
+  border-radius: 1px;
 }
 
 .logo {
   display: flex;
   align-items: center;
   cursor: pointer;
-  gap: 12px;
+  gap: 0.75rem;
   transition: opacity 0.2s ease;
 }
 
 .logo:hover {
-  opacity: 0.92;
+  opacity: 0.85;
 }
 
 .logo-img {
   height: 36px;
-  margin-right: 0;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+  width: 36px;
+}
+
+.logo-text-group {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
 }
 
 .logo-text {
-  font-family: var(--sa-font-heading, 'Poppins', sans-serif);
+  font-family: var(--sa-font-heading);
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--cc-ink);
   letter-spacing: -0.02em;
 }
 
-.menu {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-:deep(.el-menu--horizontal) {
-  border-bottom: none;
-}
-
-:deep(.el-menu--horizontal > .el-menu-item) {
-  height: 64px;
-  line-height: 64px;
-  border-bottom: none;
-  color: white;
-}
-
-:deep(.el-menu--horizontal > .el-menu-item.is-active) {
-  border-bottom: 2px solid #fbbf24;
-  color: #fbbf24;
+.logo-sub {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--cc-muted);
+  letter-spacing: 0.04em;
 }
 
 .user-area {
@@ -172,42 +158,54 @@ const goToLogin = () => {
 .user-info-btn {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
   cursor: pointer;
-  color: white;
+  color: var(--cc-ink);
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--sa-radius-sm);
+  transition: background-color 0.2s ease;
+}
+
+.user-info-btn:hover {
+  background: var(--cc-paper);
+}
+
+.user-avatar {
+  background: var(--cc-green) !important;
+  color: #fff !important;
+  font-weight: 700;
+  font-size: 14px;
 }
 
 .username {
-  margin: 0 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
-/* 退出登录按钮样式 */
 :deep(.logout-item) {
-  color: #f56c6c !important;
+  color: var(--cc-accent) !important;
 }
 
 :deep(.logout-item:hover) {
-  background-color: #fef0f0 !important;
+  background-color: var(--cc-accent-soft) !important;
 }
 
-.logout-icon {
-  color: #f56c6c !important;
-}
-
+.logout-icon,
 .logout-text {
-  color: #f56c6c !important;
+  color: var(--cc-accent) !important;
 }
 
 .login-cta {
-  cursor: pointer;
-  background: #fff !important;
-  color: var(--sa-primary-bright, #2563eb) !important;
+  background: var(--cc-accent) !important;
+  color: #fff !important;
   border: none !important;
   font-weight: 600;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--sa-radius-sm) !important;
 }
 
 .login-cta:hover {
-  background: #f8fafc !important;
-  color: var(--sa-primary, #1e3a8a) !important;
+  background: var(--cc-accent-hover) !important;
+  color: #fff !important;
 }
 </style>

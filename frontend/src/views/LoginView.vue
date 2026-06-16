@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authApi } from '@/api'
 import { setToken } from '@/utils/auth'
+import logoUrl from '@/assets/logo.svg'
 
 const router = useRouter()
 const loading = ref(false)
@@ -82,10 +83,12 @@ const goToForgotPassword = () => {
 </script>
 
 <template>
-  <div class="login-container">
+  <div class="login-container cc-page-bg">
     <div class="login-box">
       <div class="role-selector">
-        <h2>角色选择</h2>
+        <p class="role-eyebrow">选择身份</p>
+        <h2>欢迎回来</h2>
+        <p class="role-hint">不同角色将进入对应工作台</p>
         <div class="role-options">
           <div
             v-for="role in roleOptions"
@@ -104,10 +107,13 @@ const goToForgotPassword = () => {
 
       <div class="login-form">
         <div class="login-content">
-          <h2 style="display: flex; align-items: center; gap: 10px">
-            <img src="@/assets/logo.png" alt="Logo" style="height: 32px" />
-            CampusClub 校园社团助手
-          </h2>
+          <div class="brand-row">
+            <img :src="logoUrl" alt="Logo" class="brand-logo" />
+            <div>
+              <h2>CampusClub</h2>
+              <p class="brand-tagline">发现活动 · 智能报名 · 社团协作</p>
+            </div>
+          </div>
 
           <el-form>
             <el-form-item class="form-item">
@@ -149,71 +155,76 @@ const goToForgotPassword = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(1200px 600px at 10% -10%, rgba(37, 99, 235, 0.18), transparent 55%),
-    radial-gradient(900px 480px at 100% 0%, rgba(249, 115, 22, 0.12), transparent 50%),
-    var(--sa-bg, #eff6ff);
   box-sizing: border-box;
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 24px;
+  inset: 0;
+  padding: 1.5rem;
 }
 
 .login-box {
-  width: 80%;
-  max-width: 900px;
-  height: auto;
-  min-height: 500px;
+  width: min(920px, 96%);
+  min-height: 520px;
   display: flex;
-  border-radius: var(--sa-radius-lg, 16px);
+  border-radius: var(--sa-radius-lg);
   overflow: hidden;
-  box-shadow: var(--sa-shadow-md, 0 10px 40px rgba(15, 23, 42, 0.08));
-  border: 1px solid var(--sa-border, #e2e8f0);
+  box-shadow: var(--sa-shadow-md);
+  border: 1px solid var(--cc-border);
 }
 
 .role-selector {
-  width: 300px;
-  background: var(--sa-header-gradient, linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%));
-  color: white;
-  padding: 40px 24px;
+  width: 320px;
+  flex-shrink: 0;
+  background: linear-gradient(160deg, #c84b31 0%, #a83d28 55%, #2f5d4e 100%);
+  color: #fff;
+  padding: 2.5rem 1.75rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
+}
+
+.role-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin-bottom: 0.5rem;
 }
 
 .role-selector h2 {
-  margin-bottom: 40px;
-  font-family: var(--sa-font-heading, 'Poppins', sans-serif);
-  font-weight: 600;
-  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-family: var(--sa-font-heading);
+  font-weight: 700;
+  font-size: 1.75rem;
+  color: #fff;
   letter-spacing: -0.02em;
+}
+
+.role-hint {
+  font-size: 0.875rem;
+  opacity: 0.88;
+  margin-bottom: 2rem;
+  line-height: 1.5;
 }
 
 .role-options {
   display: flex;
   flex-direction: column;
   width: 100%;
-  flex: 1;
-  justify-content: flex-start;
-  align-items: center;
+  gap: 0.6rem;
 }
 
 .role-option {
-  padding: 14px 18px;
-  margin-bottom: 12px;
-  border-radius: 12px;
-  text-align: center;
+  padding: 0.85rem 1rem;
+  border-radius: var(--sa-radius-sm);
   cursor: pointer;
-  font-size: 15px;
+  font-size: 0.95rem;
   font-weight: 500;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  transition: var(--sa-transition);
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  gap: 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .role-icon {
@@ -221,22 +232,22 @@ const goToForgotPassword = () => {
 }
 
 .role-option:hover {
-  background-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateX(3px);
 }
 
 .role-option.active {
-  background-color: white;
-  color: var(--sa-primary-bright, #2563eb);
+  background: var(--cc-surface);
+  color: var(--cc-accent);
   font-weight: 600;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
   border-color: transparent;
+  box-shadow: var(--sa-shadow-md);
 }
 
 .login-form {
   flex: 1;
-  background: rgba(255, 255, 255, 0.98);
-  padding: 40px;
+  background: var(--cc-surface);
+  padding: 2.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -245,23 +256,33 @@ const goToForgotPassword = () => {
 
 .login-content {
   width: 100%;
-  max-width: 350px;
-  display: flex;
-  flex-direction: column;
+  max-width: 360px;
 }
 
-.login-form h2 {
-  margin-bottom: 50px;
-  color: var(--sa-text, #0f172a);
-  text-align: center;
-  width: 100%;
+.brand-row {
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-family: var(--sa-font-heading, 'Poppins', sans-serif);
-  font-weight: 600;
-  font-size: 1.35rem;
-  gap: 10px;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.brand-logo {
+  height: 48px;
+  width: 48px;
+}
+
+.brand-row h2 {
+  font-family: var(--sa-font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--cc-ink);
+  margin: 0;
+}
+
+.brand-tagline {
+  font-size: 0.8rem;
+  color: var(--cc-muted);
+  margin-top: 0.25rem;
 }
 
 .login-form :deep(.el-form) {
@@ -269,72 +290,47 @@ const goToForgotPassword = () => {
 }
 
 .form-item {
-  margin-bottom: 25px;
-}
-
-.login-form :deep(.el-input__wrapper) {
-  border-radius: 12px;
-  box-shadow: 0 0 0 1px var(--sa-border, #e2e8f0) inset;
-  height: 46px;
-  transition: box-shadow 0.2s ease;
-}
-
-.login-form :deep(.el-input__wrapper:hover),
-.login-form :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px var(--sa-primary-bright, #2563eb) inset;
+  margin-bottom: 1.25rem;
 }
 
 .login-button {
   width: 100%;
   height: 48px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  margin-top: 10px;
-  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 0.5rem;
 }
 
 .login-options {
   display: flex;
   justify-content: space-between;
-  margin-top: 25px;
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .login-box {
     flex-direction: column;
-    height: auto;
-    width: 95%;
+    min-height: auto;
   }
-  
+
   .role-selector {
     width: 100%;
-    padding: 30px 20px;
+    padding: 1.5rem;
   }
-  
+
   .role-options {
     flex-direction: row;
-    justify-content: center;
     flex-wrap: wrap;
-    gap: 10px;
   }
-  
+
   .role-option {
-    width: 100px;
-    margin-bottom: 0;
+    flex: 1;
+    min-width: 90px;
+    justify-content: center;
   }
-  
+
   .login-form {
-    padding: 40px 20px;
-  }
-  
-  .login-form h2 {
-    margin-bottom: 40px;
-  }
-  
-  .form-item {
-    margin-bottom: 20px;
+    padding: 1.5rem;
   }
 }
 </style>

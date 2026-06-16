@@ -425,7 +425,7 @@ onMounted(() => {
     <HeaderNav :username="username"/>
 
     <!-- 主要内容区域 -->
-    <main class="main-content">
+    <main class="main-content cc-page-bg">
       <div class="chat-container">
         <!-- 使用聊天组件 -->
         <ChatBox
@@ -469,12 +469,29 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 24px 20px;
-  background: radial-gradient(800px 400px at 50% 0%, rgba(37, 99, 235, 0.08), transparent 60%),
-    var(--sa-bg, #eff6ff);
+  padding: 1.25rem;
   width: 100%;
   box-sizing: border-box;
   overflow: auto;
+}
+
+.stream-status {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: var(--cc-surface);
+  border-radius: 999px;
+  color: var(--cc-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid var(--cc-border);
+  box-shadow: var(--sa-shadow-md);
+  z-index: 10;
 }
 
 .chat-container {
@@ -485,28 +502,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   position: relative;
-}
-
-.stream-status {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 22px;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 999px;
-  color: var(--sa-primary-bright, #2563eb);
-  font-size: 14px;
-  font-weight: 600;
-  border: 1px solid var(--sa-border, #e2e8f0);
-  box-shadow: var(--sa-shadow-md, 0 10px 40px rgba(15, 23, 42, 0.08));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  z-index: 10;
 }
 
 .stream-status .el-icon {

@@ -149,7 +149,7 @@ const goToLogin = () => {
 </script>
 
 <template>
-  <div class="register-container">
+  <div class="register-container cc-page-bg">
     <div class="register-box">
       <div class="register-header">
         <h2>注册账号</h2>
@@ -270,28 +270,20 @@ const goToLogin = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(1000px 500px at 0% 0%, rgba(37, 99, 235, 0.14), transparent 50%),
-    radial-gradient(800px 400px at 100% 100%, rgba(249, 115, 22, 0.1), transparent 45%),
-    var(--sa-bg, #eff6ff);
   box-sizing: border-box;
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 20px;
+  inset: 0;
+  padding: 1.25rem;
 }
 
 .register-box {
   width: 100%;
   max-width: 600px;
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: var(--sa-radius-lg, 16px);
-  padding: 40px;
-  box-shadow: var(--sa-shadow-md, 0 10px 40px rgba(15, 23, 42, 0.08));
-  border: 1px solid var(--sa-border, #e2e8f0);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--cc-surface);
+  border-radius: var(--sa-radius-lg);
+  padding: 2.5rem;
+  box-shadow: var(--sa-shadow-md);
+  border: 1px solid var(--cc-border);
 }
 
 .register-header {

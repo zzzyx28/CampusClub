@@ -27,10 +27,10 @@ let registrationChart = null;
 // 仪表盘数据
 const dashboardData = reactive({
   stats: [
-    { title: '今日活动', value: 0, icon: 'Location', color: '#2563eb' },
-    { title: '今日报名', value: 0, icon: 'Ticket', color: '#16a34a' },
-    { title: '活跃用户', value: 0, icon: 'User', color: '#d97706' },
-    { title: '助手工单', value: 0, icon: 'Service', color: '#ea580c' }
+    { title: '今日活动', value: 0, icon: 'Location', color: '#c84b31' },
+    { title: '今日报名', value: 0, icon: 'Ticket', color: '#2f5d4e' },
+    { title: '活跃用户', value: 0, icon: 'User', color: '#b8860b' },
+    { title: '助手工单', value: 0, icon: 'Service', color: '#7a5c3a' }
   ],
   dates: [],
   dailyActivities: [],
@@ -124,7 +124,7 @@ const initCharts = async () => {
             type: 'bar',
             data: dashboardData.dailyActivities,
             itemStyle: {
-              color: '#2563eb',
+              color: '#c84b31',
               borderRadius: [6, 6, 0, 0]
             }
           }
@@ -171,12 +171,12 @@ const initCharts = async () => {
             data: dashboardData.dailyRegistrations,
             smooth: true,
             itemStyle: {
-              color: '#16a34a'
+              color: '#2f5d4e'
             },
             areaStyle: {
               color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: 'rgba(22, 163, 74, 0.45)' },
-                { offset: 1, color: 'rgba(22, 163, 74, 0.06)' }
+                { offset: 0, color: 'rgba(47, 93, 78, 0.4)' },
+                { offset: 1, color: 'rgba(47, 93, 78, 0.05)' }
               ])
             }
           }
@@ -269,7 +269,7 @@ const menuItems = [
       <div class="content-area">
         <!-- 仪表盘 -->
         <div v-if="activeMenu === 'dashboard'">
-          <h2 class="page-title">仪表盘</h2>
+          <h2 class="cc-page-title">仪表盘</h2>
           <div v-loading="loading" class="stats-container">
             <!-- 使用统计卡片组件 -->
             <StatCard 
@@ -304,42 +304,42 @@ const menuItems = [
         </div>
         
         <div v-if="activeMenu === 'activities'">
-          <h2 class="page-title">活动管理</h2>
+          <h2 class="cc-page-title">活动管理</h2>
           <ActivitiesManagement />
         </div>
         
         <div v-if="activeMenu === 'registrations'">
-          <h2 class="page-title">报名管理</h2>
+          <h2 class="cc-page-title">报名管理</h2>
           <RegistrationsManagement />
         </div>
         
         <!-- 会话管理 -->
         <div v-if="activeMenu === 'conversations'">
-          <h2 class="page-title">会话管理</h2>
+          <h2 class="cc-page-title">会话管理</h2>
           <ConversationsManagement />
         </div>
         
         <!-- 提示词管理 -->
         <div v-if="activeMenu === 'prompts'">
-          <h2 class="page-title">提示词管理</h2>
+          <h2 class="cc-page-title">提示词管理</h2>
           <PromptsManagement />
         </div>
         
         <!-- 知识库管理 -->
         <div v-if="activeMenu === 'knowledge'">
-          <h2 class="page-title">知识库管理</h2>
+          <h2 class="cc-page-title">知识库管理</h2>
           <KnowledgeManagement />
         </div>
         
         <!-- 账号管理 -->
         <div v-if="activeMenu === 'accounts'">
-          <h2 class="page-title">账号管理</h2>
+          <h2 class="cc-page-title">账号管理</h2>
           <AccountsManagement />
         </div>
         
         <!-- 日志信息 -->
         <div v-if="activeMenu === 'logs'">
-          <h2 class="page-title">日志信息</h2>
+          <h2 class="cc-page-title">日志信息</h2>
           <LogsManagement />
         </div>
       </div>
@@ -363,38 +363,32 @@ const menuItems = [
 .main-content {
   flex: 1;
   display: flex;
-  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 40%);
+  background: var(--cc-paper);
   width: 100%;
   box-sizing: border-box;
-  height: calc(100% - 64px);
+  height: calc(100% - var(--cc-header-h, 60px));
   overflow: hidden;
 }
 
 .sidebar {
-  width: 228px;
+  width: 240px;
   height: 100%;
-  background: rgba(255, 255, 255, 0.92);
-  border-right: 1px solid var(--sa-border, #e2e8f0);
-  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.04);
+  background: var(--cc-surface);
+  border-right: 1px solid var(--cc-border);
   overflow-y: auto;
 }
 
 .content-area {
   flex: 1;
-  padding: 24px 28px;
+  padding: 1.5rem 1.75rem;
   overflow-y: auto;
-  width: 100%;
-  box-sizing: border-box;
-  height: 100%;
+  background: var(--cc-paper);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(200, 75, 49, 0.05), transparent 50%);
 }
 
 .page-title {
-  margin-bottom: 22px;
-  font-family: var(--sa-font-heading, 'Poppins', sans-serif);
-  font-size: 1.375rem;
-  font-weight: 600;
-  color: var(--sa-text, #0f172a);
-  letter-spacing: -0.02em;
+  display: none;
 }
 
 .stats-container {

@@ -25,6 +25,8 @@ app:
     api-key: your_dashscope_key
   chat:
     memory: mongo
+  seed:
+    dev-data: true
 
 admin:
   username: admin

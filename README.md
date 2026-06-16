@@ -23,11 +23,19 @@ CampusClub 面向校内社团活动与票务场景：讲座、比赛、招新、
 
 ### 2. 初始化数据库
 
-1. 在 MySQL 中创建库 **`campusclub`**
-2. 启动后端时 Flyway 会自动执行 `backend/src/main/resources/db/migration/` 建表
-3. 本地 `local` profile 下会自动灌入演示数据（可通过 `app.seed.dev-data=false` 关闭）
+1. 启动 Docker 基础设施：`docker compose up -d mysql mongodb redis`（或自行安装 MySQL）
+2. 创建库 **`campusclub`**（Docker Compose 会自动创建）
+3. 启动后端时 **Flyway** 自动建表（`backend/src/main/resources/db/migration/`）
+4. 本地 `local` profile 下自动灌入演示数据（`data/seed/dev-data.sql`，详见 [data/README.md](./data/README.md)）
 
-手动建库参考：`backend/src/main/resources/schema.sql`（遗留脚本，推荐 Flyway）
+关闭自动灌数：在 `application-local.yml` 设置 `app.seed.dev-data: false`
+
+手动重置演示数据：
+
+```bash
+mysql -uroot -proot campusclub < data/scripts/reset-dev.sql
+# 然后重启后端
+```
 
 ### 3. 后端配置
 

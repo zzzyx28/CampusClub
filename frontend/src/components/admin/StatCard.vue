@@ -1,42 +1,31 @@
 <script setup>
-import { defineProps, computed } from 'vue';
-import * as ElementPlusIconsVue from '@element-plus/icons-vue';
+import { defineProps } from 'vue';
 
-const props = defineProps({
+defineProps({
   title: {
     type: String,
-    required: true
+    required: true,
   },
   value: {
     type: [Number, String],
-    required: true
+    required: true,
   },
   icon: {
     type: String,
-    default: ''
+    default: '',
   },
   color: {
     type: String,
-    default: '#2563eb'
-  }
-});
-
-const isActivityRelated = computed(() => {
-  return props.title.includes('活动') || props.title.includes('报名');
+    default: '#c84b31',
+  },
 });
 </script>
 
 <template>
-  <el-card class="stat-card">
+  <el-card class="stat-card" shadow="never">
     <div class="stat-content">
       <div class="stat-icon" :style="{ backgroundColor: color }">
-        <template v-if="isActivityRelated">
-          <!-- 使用飞机图标的SVG -->
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="custom-icon">
-            <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path>
-          </svg>
-        </template>
-        <el-icon v-else>
+        <el-icon v-if="icon">
           <component :is="icon" />
         </el-icon>
       </div>
@@ -51,54 +40,45 @@ const isActivityRelated = computed(() => {
 <style scoped>
 .stat-card {
   width: 100%;
-  border-radius: var(--sa-radius-md, 12px) !important;
-  transition: box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
-  box-shadow: var(--sa-shadow-md, 0 10px 40px rgba(15, 23, 42, 0.08)) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--sa-shadow-md) !important;
 }
 
 .stat-content {
   display: flex;
   align-items: center;
+  gap: 1rem;
 }
 
 .stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
   color: white;
-  font-size: 24px;
-  margin-right: 16px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
-}
-
-.custom-icon {
-  width: 28px;
-  height: 28px;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
 .stat-value {
-  font-size: 26px;
+  font-size: 1.65rem;
   font-weight: 700;
-  font-family: var(--sa-font-heading, 'Poppins', sans-serif);
-  color: var(--sa-text, #0f172a);
+  font-family: var(--sa-font-heading);
+  color: var(--cc-ink);
   letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 .stat-title {
-  font-size: 13px;
+  font-size: 0.8rem;
   font-weight: 500;
-  color: var(--sa-text-muted, #475569);
-  margin-top: 6px;
+  color: var(--cc-muted);
+  margin-top: 0.25rem;
 }
-</style> 
+</style>
