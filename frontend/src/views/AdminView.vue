@@ -13,7 +13,6 @@ import LogsManagement from '@/components/admin/LogsManagement.vue';
 import { parseJwt } from '@/utils/jwt';
 import { dashboardApi } from '@/api/dashboard';
 import { ElMessage } from 'element-plus';
-import * as echarts from 'echarts';
 
 const username = ref('管理员');
 const activeMenu = ref('dashboard');
@@ -87,9 +86,9 @@ const loadDashboardData = async () => {
   }
 };
 
-// 初始化图表
-const initCharts = () => {
-  // 确保DOM已经渲染
+// 初始化图表（懒加载 ECharts 减小首屏包体积）
+const initCharts = async () => {
+  const echarts = await import('echarts');
   setTimeout(() => {
     if (activityChartRef.value) {
       if (activityChart) {

@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -29,4 +30,10 @@ public interface TicketTierMapper extends BaseMapper<TicketTier> {
 
     @Select("SELECT COUNT(*) FROM registration WHERE ticket_tier_id = #{tierId}")
     int countRegistrationRefsByTierId(@Param("tierId") Long tierId);
+
+    @Update("UPDATE ticket_tier SET capacity = capacity - 1 WHERE id = #{id} AND capacity > 0")
+    int decrementCapacityIfAvailable(@Param("id") Long id);
+
+    @Update("UPDATE ticket_tier SET capacity = capacity + #{count} WHERE id = #{id}")
+    int incrementCapacity(@Param("id") Long id, @Param("count") int count);
 }

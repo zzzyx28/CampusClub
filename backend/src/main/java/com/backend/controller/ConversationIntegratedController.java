@@ -4,7 +4,9 @@ import com.backend.common.Result;
 import com.backend.common.enumeration.ResultCode;
 import com.backend.entity.ConversationDocument;
 import com.backend.entity.ConversationIndex;
+import com.backend.exception.ForbiddenException;
 import com.backend.service.ConversationIntegratedService;
+import com.backend.util.AuthContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.bind.annotation.*;
@@ -62,6 +64,7 @@ public class ConversationIntegratedController {
      */
     @GetMapping("/user/{userId}")
     public Result listConversationsByUserId(@PathVariable Long userId) {
+        AuthContext.ensureSelfOrAdmin(userId);
         List<ConversationIndex> conversations = conversationService.listConversationsByUserId(userId);
         return Result.success(conversations);
     }
@@ -74,6 +77,7 @@ public class ConversationIntegratedController {
      */
     @GetMapping("/user/{userId}/contents")
     public Result getUserConversationContents(@PathVariable Long userId) {
+        AuthContext.ensureSelfOrAdmin(userId);
         List<ConversationDocument> conversations = conversationService.getUserConversationContents(userId);
         return Result.success(conversations);
     }
@@ -109,6 +113,7 @@ public class ConversationIntegratedController {
      */
     @GetMapping("/user/{userId}/active")
     public Result getUserActiveConversation(@PathVariable Long userId) {
+        AuthContext.ensureSelfOrAdmin(userId);
         ConversationIndex activeConversation = conversationService.getActiveByUserId(userId);
         return Result.success(activeConversation);
     }
@@ -122,6 +127,9 @@ public class ConversationIntegratedController {
     @PostMapping
     public Result createConversation(@RequestBody Map<String, Object> params) {
         Long userId = Long.valueOf(params.get("userId").toString());
+        if (!AuthContext.isAdmin() && !userId.equals(AuthContext.getUserId())) {
+            throw new ForbiddenException("只能为自己创建会话");
+        }
         String initialMessage = (String) params.get("initialMessage");
         
         // 参数校验
@@ -150,6 +158,9 @@ public class ConversationIntegratedController {
     public Result startConversation(
             @RequestParam Long userId,
             @RequestParam String userInput) {
+        if (!AuthContext.isAdmin() && !userId.equals(AuthContext.getUserId())) {
+            throw new ForbiddenException("只能为自己创建会话");
+        }
         Map<String, Object> result = conversationService.createConversation(userId, userInput);
         return Result.success(result);
     }

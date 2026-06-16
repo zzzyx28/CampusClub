@@ -4,6 +4,7 @@ import com.backend.common.Result;
 import com.backend.common.enumeration.ResultCode;
 import com.backend.dao.redis.RedisDao;
 import com.backend.entity.User;
+import com.backend.service.RateLimitService;
 import com.backend.service.UserService;
 import com.backend.util.EmailUtil;
 import com.backend.util.JwtUtil;
@@ -34,6 +35,10 @@ public class AuthController {
     private RedisDao redisDao;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private RateLimitService rateLimitService;
 
     /**
      * 用户登录
@@ -80,7 +85,7 @@ public class AuthController {
         tokenClaims.put("username", user.getUsername());
         tokenClaims.put("userType", user.getUserType());
 
-        String token = JwtUtil.generateJwt(tokenClaims);
+        String token = jwtUtil.generateJwt(tokenClaims);
         
         return Result.success("登录成功", token);
     }
@@ -95,6 +100,12 @@ public class AuthController {
     public Result sendVerificationCode(@RequestBody Map<String, String> params) {
         String email = params.get("email");
         String type = params.get("type");
+
+        if (email == null || type == null) {
+            return Result.error(ResultCode.PARAM_ERROR, "邮箱和类型不能为空");
+        }
+
+        rateLimitService.checkEmailSendLimit(email, type);
 
         // 1. 生成并发送验证码
         String code = emailUtil.sendVerificationCode(email, type);

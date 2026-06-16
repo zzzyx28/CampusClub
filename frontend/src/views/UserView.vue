@@ -6,6 +6,7 @@ import HeaderNav from '@/components/common/HeaderNav.vue';
 import ChatBox from '@/components/chat/ChatBox.vue';
 import {conversationApi} from '@/api';
 import {parseJwt} from '@/utils/jwt';
+import {getToken} from '@/utils/auth';
 
 const router = useRouter();
 const username = ref('用户名');
@@ -188,7 +189,12 @@ const createSSEConnection = (message) => {
     if (currentUserId.value != null && currentUserId.value !== '') {
       params.set('userId', String(currentUserId.value));
     }
-    const url = `http://localhost:8080/api/ai/generateStreamAsString?${params.toString()}`;
+    const token = getToken();
+    if (token) {
+      params.set('token', token);
+    }
+    const baseApi = import.meta.env.VITE_APP_BASE_API || 'http://localhost:8080/api';
+    const url = `${baseApi}/ai/generateStreamAsString?${params.toString()}`;
     eventSource = new EventSource(url);
 
     let aiResponse = '';

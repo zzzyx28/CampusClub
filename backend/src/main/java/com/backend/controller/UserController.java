@@ -4,6 +4,7 @@ import com.backend.common.Result;
 import com.backend.common.enumeration.ResultCode;
 import com.backend.entity.User;
 import com.backend.service.UserService;
+import com.backend.util.AuthContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +33,7 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public Result getUserInfo(@PathVariable Long id) {
+        AuthContext.ensureSelfOrServiceOrAdmin(id);
         User user = userService.getById(id);
         if (user == null) {
             return Result.error(ResultCode.NOT_FOUND, "用户不存在");
@@ -61,6 +63,7 @@ public class UserController {
     */
     @PutMapping("/{id}")
     public Result updateUserInfo(@PathVariable Long id, @RequestBody User updatedUser) {
+        AuthContext.ensureSelfOrAdmin(id);
         User user = userService.getById(id);
         if (user == null) {
             return Result.error(ResultCode.NOT_FOUND, "用户不存在");

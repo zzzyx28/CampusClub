@@ -1,9 +1,11 @@
 # --- Environment / secrets ---
 application-*.yml
+!**/src/test/resources/application-test.yml
 .env
 .env.*
 !.env.example
 !.env.sample
+!.env.development.example
 
 # --- Logs ---
 logs/

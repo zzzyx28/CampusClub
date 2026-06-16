@@ -43,7 +43,12 @@ public enum ResultCode {
     /**
      * 服务不可用
      */
-    SERVICE_UNAVAILABLE(503, "服务不可用");
+    SERVICE_UNAVAILABLE(503, "服务不可用"),
+
+    /**
+     * 请求过于频繁
+     */
+    TOO_MANY_REQUESTS(429, "请求过于频繁");
     
     /**
      * 状态码

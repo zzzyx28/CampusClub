@@ -1,7 +1,8 @@
 package com.backend.service.impl;
 
-import com.backend.dao.mongo.KnowledgeDocumentRepository;
 import com.backend.entity.KnowledgeDocument;
+import com.backend.dao.mongo.KnowledgeDocumentRepository;
+import com.backend.service.KnowledgeEmbeddingService;
 import com.backend.service.KnowledgeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import java.util.List;
 public class KnowledgeServiceImpl implements KnowledgeService {
 
     private final KnowledgeDocumentRepository knowledgeDao;
+    private final KnowledgeEmbeddingService knowledgeEmbeddingService;
 
     @Override
     public KnowledgeDocument addKnowledge(String title, String content, List<String> tags) {
@@ -22,7 +24,9 @@ public class KnowledgeServiceImpl implements KnowledgeService {
         doc.setContent(content);
         doc.setTags(tags);
         doc.setLastUpdated(new Date());
-        return knowledgeDao.save(doc);
+        KnowledgeDocument saved = knowledgeDao.save(doc);
+        knowledgeEmbeddingService.syncKnowledge(saved);
+        return saved;
     }
 
     @Override
@@ -38,16 +42,31 @@ public class KnowledgeServiceImpl implements KnowledgeService {
         doc.setContent(newDoc.getContent());
         doc.setTags(newDoc.getTags());
         doc.setLastUpdated(new Date());
-        knowledgeDao.save(doc);
+        KnowledgeDocument saved = knowledgeDao.save(doc);
+        knowledgeEmbeddingService.syncKnowledge(saved);
     }
 
     @Override
     public void deleteById(String id) {
+        knowledgeEmbeddingService.deleteByKnowledgeId(id);
         knowledgeDao.deleteById(id);
     }
 
     @Override
     public List<KnowledgeDocument> listAll() {
         return knowledgeDao.findAll();
+    }
+
+    @Override
+    public void reindexAll() {
+        List<KnowledgeDocument> documents = knowledgeDao.findAll();
+        for (KnowledgeDocument document : documents) {
+            knowledgeEmbeddingService.syncKnowledge(document);
+        }
+    }
+
+    @Override
+    public void reindexById(String id) {
+        knowledgeDao.findById(id).ifPresent(knowledgeEmbeddingService::syncKnowledge);
     }
 }

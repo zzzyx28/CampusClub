@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.aop.AiChatLoggingAdvisor;
-import com.backend.config.CampusClubAgentPrompts;
+import com.backend.service.SystemPromptProvider;
 
 import reactor.core.publisher.Flux;
 
@@ -27,13 +27,17 @@ public class AiController {
     private static final int MEMORY_WINDOW = 24;
 
     private final ChatClient chatClient;
+    private final SystemPromptProvider systemPromptProvider;
 
-    public AiController(ChatClient.Builder chatClientBuilder, ChatMemory chatMemory, VectorStore vectorStore) {
+    public AiController(ChatClient.Builder chatClientBuilder,
+                        ChatMemory chatMemory,
+                        VectorStore vectorStore,
+                        SystemPromptProvider systemPromptProvider) {
         SearchRequest ragSearch = SearchRequest.defaults()
                 .withTopK(5)
                 .withSimilarityThreshold(0.2);
+        this.systemPromptProvider = systemPromptProvider;
         this.chatClient = chatClientBuilder
-                .defaultSystem(CampusClubAgentPrompts.SYSTEM_TEMPLATE)
                 .defaultAdvisors(
                         new PromptChatMemoryAdvisor(chatMemory),
                         new QuestionAnswerAdvisor(vectorStore, ragSearch),
@@ -64,8 +68,10 @@ public class AiController {
                 : "anonymous";
 
         String userLabel = userId != null ? String.valueOf(userId) : "未知（请引导用户登录或询问后再报名）";
+        String systemPrompt = systemPromptProvider.getSystemPrompt();
 
         Flux<String> content = this.chatClient.prompt()
+                .system(systemPrompt)
                 .user(message)
                 .system(spec -> spec
                         .param("current_date", LocalDate.now().toString())

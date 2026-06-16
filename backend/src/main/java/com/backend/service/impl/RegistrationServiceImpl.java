@@ -9,9 +9,11 @@ import com.backend.entity.User;
 import com.backend.service.ActivityService;
 import com.backend.service.RegistrationService;
 import com.backend.service.UserService;
+import com.backend.util.EmailUtil;
 import com.backend.vo.RegistrationDetail;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Registration> implements RegistrationService {
 
@@ -33,6 +36,9 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
 
     @Autowired
     private TicketTierMapper ticketTierMapper;
+
+    @Autowired
+    private EmailUtil emailUtil;
 
     @Override
     public List<Registration> listByUserId(Long userId) {
@@ -66,6 +72,14 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
             throw new RuntimeException("该活动当前不可报名");
         }
 
+        LambdaQueryWrapper<Registration> duplicateQuery = new LambdaQueryWrapper<>();
+        duplicateQuery.eq(Registration::getUserId, userId)
+                .eq(Registration::getActivityId, activityId)
+                .eq(Registration::getStatus, 1);
+        if (count(duplicateQuery) > 0) {
+            throw new RuntimeException("您已报名该活动，请勿重复报名");
+        }
+
         TicketTier selectedTier;
         if (tierName != null && !tierName.isBlank()) {
             selectedTier = ticketTierMapper.getByActivityIdAndTierName(activityId, tierName);
@@ -82,6 +96,11 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
             throw new RuntimeException("所选票档名额已满");
         }
 
+        int decremented = ticketTierMapper.decrementCapacityIfAvailable(selectedTier.getId());
+        if (decremented == 0) {
+            throw new RuntimeException("所选票档名额已满");
+        }
+
         Registration registration = new Registration();
         registration.setUserId(userId);
         registration.setActivityId(activityId);
@@ -92,9 +111,7 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
         registration.setStatus(1);
 
         save(registration);
-
-        selectedTier.setCapacity(selectedTier.getCapacity() - 1);
-        ticketTierMapper.updateById(selectedTier);
+        sendRegistrationEmail(user, registration.getId(), 1);
 
         return registration;
     }
@@ -111,14 +128,14 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
         }
 
         registration.setStatus(2);
+        ticketTierMapper.incrementCapacity(registration.getTicketTierId(), registration.getTicketCount());
 
-        TicketTier tier = ticketTierMapper.selectById(registration.getTicketTierId());
-        if (tier != null) {
-            tier.setCapacity(tier.getCapacity() + registration.getTicketCount());
-            ticketTierMapper.updateById(tier);
+        boolean updated = updateById(registration);
+        if (updated) {
+            User user = userService.getById(registration.getUserId());
+            sendRegistrationEmail(user, registrationId, 2);
         }
-
-        return updateById(registration);
+        return updated;
     }
 
     @Override
@@ -171,5 +188,27 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
         return registrations.stream()
                 .map(reg -> registrationMapper.getRegistrationDetailById(reg.getId()))
                 .collect(Collectors.toList());
+    }
+
+    private void sendRegistrationEmail(User user, Long registrationId, int status) {
+        if (user == null || user.getEmail() == null || user.getEmail().isBlank()) {
+            return;
+        }
+        try {
+            RegistrationDetail detail = registrationMapper.getRegistrationDetailById(registrationId);
+            if (detail == null) {
+                return;
+            }
+            String eventStart = detail.getEventStart() != null ? detail.getEventStart().toString() : "";
+            emailUtil.sendRegistrationNotification(
+                    user.getEmail(),
+                    String.valueOf(registrationId),
+                    detail.getTicketCode(),
+                    detail.getTierName(),
+                    eventStart,
+                    status);
+        } catch (Exception e) {
+            log.warn("报名通知邮件发送失败: registrationId={}, {}", registrationId, e.getMessage());
+        }
     }
 }

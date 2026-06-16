@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { isLoggedIn, getCurrentUser } from '@/utils/auth'
+import { ElMessage } from 'element-plus'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,9 +51,31 @@ const router = createRouter({
   ]
 })
 
-// 路由守卫预留（可用于验证登录状态和角色权限）
+const roleHome = {
+  user: '/user',
+  service: '/service',
+  admin: '/admin'
+}
+
 router.beforeEach((to, from, next) => {
-  // 这里后续可以添加登录验证和角色权限验证
+  if (to.meta.requiresAuth && !isLoggedIn()) {
+    next({ path: '/login', query: { redirect: to.fullPath } })
+    return
+  }
+
+  if (to.meta.role) {
+    const user = getCurrentUser()
+    if (!user || user.role !== to.meta.role) {
+      ElMessage.error('无权访问该页面')
+      if (user && roleHome[user.role]) {
+        next(roleHome[user.role])
+      } else {
+        next('/login')
+      }
+      return
+    }
+  }
+
   next()
 })
 

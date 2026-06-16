@@ -23,35 +23,17 @@ CampusClub 面向校内社团活动与票务场景：讲座、比赛、招新、
 
 ### 2. 初始化数据库
 
-1. 在 MySQL 中执行 `backend/src/main/resources/schema.sql`（创建库 **`campusclub`**）
-2. 执行 `backend/src/main/resources/data.sql`（示例用户、活动、报名等）
+1. 在 MySQL 中创建库 **`campusclub`**
+2. 启动后端时 Flyway 会自动执行 `backend/src/main/resources/db/migration/` 建表
+3. 本地 `local` profile 下会自动灌入演示数据（可通过 `app.seed.dev-data=false` 关闭）
+
+手动建库参考：`backend/src/main/resources/schema.sql`（遗留脚本，推荐 Flyway）
 
 ### 3. 后端配置
 
-新建 `backend/src/main/resources/application-local.yml`（该文件被 gitignore），示例：
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/campusclub?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: root
-    password: your_password
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/campusclub
-    redis:
-      host: localhost
-      port: 6379
-
-app:
-  aliyun:
-    mail:
-      accessKeyId: your_key
-      accessKeySecret: your_secret
-      accountName: your_account
-      fromAlias: CampusClub
-  dashscope:
-    api-key: your_dashscope_key
+```bash
+cp backend/src/main/resources/application-local.yml.example backend/src/main/resources/application-local.yml
+# 编辑 application-local.yml，填入数据库、Redis、DashScope、邮件等密钥
 ```
 
 启动：`cd backend && mvn spring-boot:run`
@@ -60,6 +42,7 @@ app:
 
 ```bash
 cd frontend
+cp .env.development.example .env.development
 npm install
 npm run dev
 ```
@@ -112,3 +95,17 @@ npm run dev
 - **前端**：Vue 3、Element Plus、Pinia、ECharts
 
 详细 API 见 [API.md](./API.md)。
+
+## 部署（可选）
+
+Docker Compose 与 CI 说明见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。
+
+## Test plan（手工验证）
+
+- [ ] 三角色登录后分别进入 `/user`、`/service`、`/admin`
+- [ ] 未登录访问 `/api/admin/user/list` 返回 401
+- [ ] 普通用户无法查看他人报名列表
+- [ ] AI 对话 SSE 流式响应正常（需配置 DashScope）
+- [ ] 管理端新增知识库后 AI 能检索到新内容
+- [ ] 重复报名同一活动被拒绝
+- [ ] `mvn test` 与 `npm run build` 通过

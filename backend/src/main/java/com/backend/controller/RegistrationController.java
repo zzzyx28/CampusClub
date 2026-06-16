@@ -3,7 +3,9 @@ package com.backend.controller;
 import com.backend.common.Result;
 import com.backend.common.enumeration.ResultCode;
 import com.backend.entity.Registration;
+import com.backend.exception.ForbiddenException;
 import com.backend.service.RegistrationService;
+import com.backend.util.AuthContext;
 import com.backend.vo.RegistrationDetail;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,7 @@ public class RegistrationController {
 
     @GetMapping("/{id}")
     public Result getRegistrationById(@PathVariable Long id) {
+        ensureRegistrationAccess(id);
         Registration registration = registrationService.getById(id);
         if (registration == null) {
             return Result.error(ResultCode.NOT_FOUND, "报名记录不存在");
@@ -29,6 +32,7 @@ public class RegistrationController {
 
     @GetMapping("/{id}/detail")
     public Result getRegistrationDetailById(@PathVariable Long id) {
+        ensureRegistrationAccess(id);
         RegistrationDetail detail = registrationService.getRegistrationDetailById(id);
         if (detail == null) {
             return Result.error(ResultCode.NOT_FOUND, "报名记录不存在");
@@ -60,6 +64,9 @@ public class RegistrationController {
             return Result.error(ResultCode.PARAM_ERROR, "用户ID与活动ID不能为空");
         }
         Long userId = Long.valueOf(body.get("userId").toString());
+        if (!AuthContext.isAdmin() && !userId.equals(AuthContext.getUserId())) {
+            throw new ForbiddenException("只能为本人创建报名");
+        }
         Long activityId = Long.valueOf(body.get("activityId").toString());
         Object tierOpt = body.get("tierName");
         String tierName = tierOpt != null ? tierOpt.toString() : null;
@@ -73,6 +80,7 @@ public class RegistrationController {
 
     @PutMapping("/{id}/cancel")
     public Result cancelRegistration(@PathVariable Long id) {
+        ensureRegistrationAccess(id);
         Registration registration = registrationService.getById(id);
         if (registration == null) {
             return Result.error(ResultCode.NOT_FOUND, "报名记录不存在");
@@ -102,5 +110,19 @@ public class RegistrationController {
     public Result listAllRegistrations() {
         List<Registration> registrations = registrationService.list();
         return Result.success(registrations);
+    }
+
+    private void ensureRegistrationAccess(Long registrationId) {
+        if (AuthContext.isServiceOrAdmin()) {
+            return;
+        }
+        Registration registration = registrationService.getById(registrationId);
+        if (registration == null) {
+            return;
+        }
+        Long currentUserId = AuthContext.getUserId();
+        if (currentUserId == null || !currentUserId.equals(registration.getUserId())) {
+            throw new ForbiddenException("无权访问该报名记录");
+        }
     }
 }

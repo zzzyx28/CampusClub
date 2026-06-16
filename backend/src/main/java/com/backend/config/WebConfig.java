@@ -1,30 +1,35 @@
 package com.backend.config;
 
-import com.backend.interceptor.LoginCheckInterceptor;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.backend.interceptor.AuthInterceptor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+@RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
-    @Autowired
-    private LoginCheckInterceptor loginCheckInterceptor;
 
-//    @Override
-//    public void addInterceptors(InterceptorRegistry registry) {
-//        registry.addInterceptor(loginCheckInterceptor).addPathPatterns("/**").excludePathPatterns("/api/auth/**");
-//    }
+    private final AuthInterceptor authInterceptor;
+    private final CorsProperties corsProperties;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(authInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns("/error");
+    }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")  // 允许所有路径的跨域请求
-//                .allowedOrigins("*") // 允许所有来源
-                .allowedOriginPatterns("*") // 允许所有来源
-                .allowedMethods("GET", "POST", "PUT", "DELETE") // 允许的请求方法
-                .allowedHeaders("*") // 允许的请求头
-                .allowCredentials(true) // 是否允许带认证信息
-                .maxAge(3600); // 预检请求的缓存时间
+        String[] origins = corsProperties.getAllowedOriginPatterns()
+                .toArray(new String[0]);
+        registry.addMapping("/**")
+                .allowedOriginPatterns(origins)
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 }

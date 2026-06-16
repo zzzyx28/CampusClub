@@ -2,6 +2,7 @@ package com.backend.aop;
 
 import com.backend.dao.mapper.SystemLogMapper;
 import com.backend.entity.SystemLog;
+import com.backend.util.AuthContext;
 import com.backend.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,8 @@ public class LogAspect {
     private HttpServletRequest request;
     @Autowired
     private SystemLogMapper systemLogMapper;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     // 默认系统用户ID，用于无法获取用户ID时使用
     private static final Long DEFAULT_USER_ID = 0L;
@@ -70,11 +73,15 @@ public class LogAspect {
      */
     private Long getCurrentUserId() {
         try {
+            Long fromContext = AuthContext.getUserId();
+            if (fromContext != null) {
+                return fromContext;
+            }
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attributes != null) {
                 String jwt = request.getHeader("token");
                 if (jwt != null && !jwt.isEmpty()) {
-                    Claims claims = JwtUtil.parseJWT(jwt);
+                    Claims claims = jwtUtil.parseJWT(jwt);
                     if (claims != null && claims.get("userId") != null) {
                         return Long.parseLong(claims.get("userId").toString());
                     }

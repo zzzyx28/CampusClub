@@ -1,6 +1,7 @@
 package com.backend.util;
 
-import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -10,6 +11,8 @@ import java.util.Map;
  */
 public final class AiToolJson {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     private AiToolJson() {
     }
 
@@ -18,7 +21,7 @@ public final class AiToolJson {
         m.put("success", true);
         m.put("message", message);
         m.put("data", data);
-        return JSON.toJSONString(m);
+        return toJson(m);
     }
 
     public static String fail(String message) {
@@ -26,6 +29,14 @@ public final class AiToolJson {
         m.put("success", false);
         m.put("message", message);
         m.put("data", null);
-        return JSON.toJSONString(m);
+        return toJson(m);
+    }
+
+    private static String toJson(Map<String, Object> map) {
+        try {
+            return MAPPER.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            return "{\"success\":false,\"message\":\"JSON序列化失败\",\"data\":null}";
+        }
     }
 }

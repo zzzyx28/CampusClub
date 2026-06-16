@@ -10,4 +10,6 @@ public interface KnowledgeService {
     void updateContentById(String id, KnowledgeDocument newDoc);
     void deleteById(String id);
     List<KnowledgeDocument> listAll();
+    void reindexAll();
+    void reindexById(String id);
 }
