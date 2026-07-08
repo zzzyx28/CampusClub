@@ -12,6 +12,21 @@ spring:
       port: 6379
 
 app:
+  ai:
+    # dashscope: native Alibaba DashScope starter
+    # openai-compatible: OpenAI protocol provider, e.g. Aliyun compatible-mode, One API, LiteLLM
+    provider: dashscope
+    tool-calling-enabled: true
+    chat:
+      model: qwen-plus
+    embedding:
+      model: text-embedding-v1
+    dashscope:
+      enabled: true
+    openai-compatible:
+      enabled: false
+      api-key: ${OPENAI_COMPATIBLE_API_KEY:your_openai_compatible_key}
+      base-url: https://llm-xa2inbbuopkt0upv.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
   jwt:
     secret: your-local-jwt-secret-at-least-32-characters-long
     expire-ms: 43200000
@@ -22,11 +37,15 @@ app:
       accountName: your_account
       fromAlias: CampusClub
   dashscope:
-    api-key: your_dashscope_key
+    api-key: ${DASHSCOPE_API_KEY:your_dashscope_key}
   chat:
     memory: mongo
   seed:
     dev-data: true
+  agent:
+    memory-window: 24
+    rag-top-k: 5
+    rag-similarity-threshold: 0.2
 
 admin:
   username: admin
@@ -35,6 +54,48 @@ admin:
 spring.ai:
   dashscope:
     api-key: ${app.dashscope.api-key}
+    chat:
+      enabled: ${app.ai.dashscope.enabled:true}
+      options:
+        model: ${app.ai.chat.model:qwen-plus}
+        temperature: 0.7
+        top-p: 0.8
+        enable-search: false
+    embedding:
+      enabled: ${app.ai.dashscope.enabled:true}
+      options:
+        model: ${app.ai.embedding.model:text-embedding-v1}
+    image:
+      enabled: false
+    audio:
+      transcription:
+        enabled: false
+      speech:
+        enabled: false
+  openai:
+    api-key: ${app.ai.openai-compatible.api-key}
+    base-url: ${app.ai.openai-compatible.base-url}
+    chat:
+      enabled: ${app.ai.openai-compatible.enabled:false}
+      # base-url already ends with /v1, so avoid duplicating /v1 here.
+      completions-path: /chat/completions
+      options:
+        model: ${app.ai.chat.model:qwen-plus}
+        temperature: 0.7
+    embedding:
+      enabled: ${app.ai.openai-compatible.enabled:false}
+      embeddings-path: /embeddings
+      options:
+        model: ${app.ai.embedding.model:text-embedding-v1}
+    image:
+      enabled: false
+    audio:
+      transcription:
+        enabled: false
+      speech:
+        enabled: false
+    moderation:
+      enabled: false
   vectorstore:
     redis:
       initialize-schema: true

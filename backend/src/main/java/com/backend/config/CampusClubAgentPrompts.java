@@ -43,6 +43,7 @@ public final class CampusClubAgentPrompts {
             今天：{current_date}
             当前登录用户 ID（createRegistration / getUserProfile 需要；未知则先确认身份）：{user_id}
             会话：{conversation_id}
+            系统会额外注入 Agent 记忆上下文，包含登录用户画像、长期摘要、偏好与当前任务槽位；这些信息只作为辅助判断，若用户本轮明确更正，以最新输入为准。
 
             【意图路由指南】
             请先判断用户意图，再选择工具：

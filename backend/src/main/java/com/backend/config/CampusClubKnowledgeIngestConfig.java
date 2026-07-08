@@ -8,6 +8,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.TextReader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -22,6 +23,7 @@ public class CampusClubKnowledgeIngestConfig {
     private final KnowledgeEmbeddingServiceImpl knowledgeEmbeddingService;
 
     @Bean
+    @ConditionalOnProperty(name = "app.knowledge.ingest.enabled", havingValue = "true", matchIfMissing = true)
     ApplicationRunner ingestCampusClubKnowledge(
             @Value("classpath:rag/campus-club-knowledge.txt") Resource knowledgeResource) {
         return args -> {

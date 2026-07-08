@@ -52,14 +52,16 @@ const fetchRegistrations = async () => {
   try {
     const response = await registrationApi.listAllRegistrations();
     if (response.code === 200) {
-      registrations.value = response.data;
+      registrations.value = Array.isArray(response.data) ? response.data : [];
     } else {
-      throw new Error(response.message || '获取报名列表失败');
+      throw new Error(response.msg || response.message || '获取报名列表失败');
     }
     filterRegistrations();
   } catch (error) {
     console.error('获取报名列表失败:', error);
-    ElMessage.error('获取报名列表失败');
+    registrations.value = [];
+    filterRegistrations();
+    ElMessage.error('获取报名列表失败: ' + (error.message || '未知错误'));
   } finally {
     loading.value = false;
   }

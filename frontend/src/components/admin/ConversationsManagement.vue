@@ -41,14 +41,16 @@ const fetchConversations = async () => {
     // 调用API获取会话列表
     const response = await conversationApi.listAllConversations();
     if (response.code === 200) {
-      conversations.value = response.data;
+      conversations.value = Array.isArray(response.data) ? response.data : [];
       console.log('获取到的会话数据:', conversations.value);
     } else {
-      throw new Error(response.message || '获取会话列表失败');
+      throw new Error(response.msg || response.message || '获取会话列表失败');
     }
     filterConversations();
   } catch (error) {
     console.error('获取会话列表失败:', error);
+    conversations.value = [];
+    filterConversations();
     ElMessage.error('获取会话列表失败: ' + (error.message || '未知错误'));
   } finally {
     loading.value = false;
@@ -137,7 +139,7 @@ const viewConversationDetail = async (conversation) => {
         conversationMessages.value = [];
       }
     } else {
-      throw new Error(response.message || '获取会话详情失败');
+      throw new Error(response.msg || response.message || '获取会话详情失败');
     }
   } catch (error) {
     console.error('获取会话详情失败:', error);

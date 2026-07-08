@@ -40,6 +40,11 @@ public class AuthInterceptor implements HandlerInterceptor {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
+        if (HttpMethod.OPTIONS.matches(method)) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            return true;
+        }
+
         if (path.startsWith("/deprecated/")) {
             writeError(response, HttpServletResponse.SC_GONE, ResultCode.ERROR, "接口已废弃");
             return false;

@@ -152,7 +152,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     }
 
     private void prepareActivityAndTiers(Activity activity, List<TicketTier> tierList, boolean isCreate) {
-        if (isCreate || activity.getActivityCode() == null || activity.getActivityCode().isBlank()) {
+        if (activity.getActivityCode() == null || activity.getActivityCode().isBlank()) {
             activity.setActivityCode(generateCode("ACT"));
         }
         for (TicketTier tier : tierList) {

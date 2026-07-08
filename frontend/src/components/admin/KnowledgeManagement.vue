@@ -39,8 +39,9 @@ const fetchKnowledgeList = async () => {
   try {
     const response = await knowledgeApi.getAllKnowledge();
     if (response.code === 200) {
+      const rawKnowledgeList = Array.isArray(response.data) ? response.data : [];
       // 转换API返回的数据格式为组件所需的格式
-      knowledgeList.value = response.data.map(item => {
+      knowledgeList.value = rawKnowledgeList.map(item => {
         // 从tags中提取分类信息，如果没有则默认为未分类
         let categoryId = 1; // 默认分类
         try {
@@ -69,10 +70,12 @@ const fetchKnowledgeList = async () => {
       });
       filterKnowledge();
     } else {
-      throw new Error(response.message || '获取知识库列表失败');
+      throw new Error(response.msg || response.message || '获取知识库列表失败');
     }
   } catch (error) {
     console.error('获取知识库列表失败:', error);
+    knowledgeList.value = [];
+    filterKnowledge();
     ElMessage.error('获取知识库列表失败: ' + (error.message || '未知错误'));
   } finally {
     loading.value = false;

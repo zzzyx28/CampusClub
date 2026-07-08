@@ -2,6 +2,7 @@ package com.backend.memory;
 
 import com.backend.dao.mongo.ConversationRepository;
 import com.backend.entity.ConversationDocument;
+import com.backend.service.AgentMemoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -18,6 +19,7 @@ import java.util.Optional;
 public class MongoChatMemory implements ChatMemory {
 
     private final ConversationRepository conversationRepository;
+    private final AgentMemoryService agentMemoryService;
 
     @Override
     public void add(String conversationId, List<Message> messages) {
@@ -44,6 +46,7 @@ public class MongoChatMemory implements ChatMemory {
             conversation.getMetadata().setSessionEnd(new Date());
         }
         conversationRepository.save(conversation);
+        agentMemoryService.updateFromMessages(conversationId, messages);
     }
 
     @Override

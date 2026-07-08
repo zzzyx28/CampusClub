@@ -38,8 +38,9 @@ const fetchPrompts = async () => {
   try {
     const response = await promptApi.getAllPrompts();
     if (response.code === 200) {
+      const rawPrompts = Array.isArray(response.data) ? response.data : [];
       // 转换API返回的数据格式为组件所需的格式
-      prompts.value = response.data.map(item => {
+      prompts.value = rawPrompts.map(item => {
         // 解析描述中的场景信息
         let scenarioId = 1;
         try {
@@ -60,10 +61,12 @@ const fetchPrompts = async () => {
       });
       filterPrompts();
     } else {
-      throw new Error(response.message || '获取提示词列表失败');
+      throw new Error(response.msg || response.message || '获取提示词列表失败');
     }
   } catch (error) {
     console.error('获取提示词列表失败:', error);
+    prompts.value = [];
+    filterPrompts();
     ElMessage.error('获取提示词列表失败: ' + (error.message || '未知错误'));
   } finally {
     loading.value = false;

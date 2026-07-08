@@ -38,14 +38,15 @@ const fetchActivities = async () => {
   try {
     const response = await activityApi.listActivities();
     if (response.code === 200) {
-      activities.value = response.data.map((a) => ({
+      const rawActivities = Array.isArray(response.data) ? response.data : [];
+      activities.value = rawActivities.map((a) => ({
         id: a.id,
-        activityCode: a.activityCode,
-        title: a.title,
-        clubName: a.clubName,
-        activityType: a.activityType,
+        activityCode: a.activityCode || '',
+        title: a.title || '',
+        clubName: a.clubName || '',
+        activityType: a.activityType || '',
         description: a.description,
-        venue: a.venue,
+        venue: a.venue || '',
         registrationStart: a.registrationStart,
         eventStart: a.eventStart,
         eventEnd: a.eventEnd,
@@ -57,11 +58,13 @@ const fetchActivities = async () => {
       }));
       filterActivities();
     } else {
-      throw new Error(response.message || '获取活动列表失败');
+      throw new Error(response.msg || response.message || '获取活动列表失败');
     }
   } catch (error) {
     console.error('获取活动列表失败:', error);
-    ElMessage.error('获取活动列表失败');
+    activities.value = [];
+    filterActivities();
+    ElMessage.error('获取活动列表失败: ' + (error.message || '未知错误'));
   } finally {
     loading.value = false;
   }

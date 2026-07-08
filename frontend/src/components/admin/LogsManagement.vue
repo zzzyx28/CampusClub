@@ -32,15 +32,17 @@ const fetchLogs = async () => {
     const response = await logApi.listLogs();
     
     if (response.code === 200) {
-      logs.value = response.data;
+      logs.value = Array.isArray(response.data) ? response.data : [];
       console.log('获取到的日志数据:', logs.value);
     } else {
-      throw new Error(response.message || '获取日志列表失败');
+      throw new Error(response.msg || response.message || '获取日志列表失败');
     }
     
     filterLogs();
   } catch (error) {
     console.error('获取日志列表失败:', error);
+    logs.value = [];
+    filterLogs();
     ElMessage.error('获取日志列表失败: ' + (error.message || '未知错误'));
   } finally {
     loading.value = false;

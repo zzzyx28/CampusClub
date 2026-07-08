@@ -8,7 +8,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Document("conversations")
 @Data
@@ -31,6 +33,9 @@ public class ConversationDocument {
     @Field("metadata")
     private Metadata metadata;
 
+    @Field("agent_memory")
+    private AgentMemory agentMemory;
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -48,5 +53,26 @@ public class ConversationDocument {
         private Date sessionStart;
         @Field("session_end")
         private Date sessionEnd;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AgentMemory {
+        /**
+         * Compact, explainable long-term memory maintained outside the LLM context
+         * window. It keeps stable user/session facts without replaying every turn.
+         */
+        private String summary;
+
+        private Map<String, String> preferences = new LinkedHashMap<>();
+
+        private Map<String, String> slots = new LinkedHashMap<>();
+
+        @Field("last_intent")
+        private String lastIntent;
+
+        @Field("updated_at")
+        private Date updatedAt;
     }
 }

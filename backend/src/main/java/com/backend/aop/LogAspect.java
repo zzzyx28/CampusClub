@@ -176,7 +176,7 @@ public class LogAspect {
         }
 
         if (operationDesc != null) {
-            logOperation(operationDesc, joinPoint);
+            return logOperation(operationDesc, joinPoint);
         }
 
         return joinPoint.proceed();
@@ -204,7 +204,7 @@ public class LogAspect {
         }
 
         if (operationDesc != null) {
-            logOperation(operationDesc, joinPoint);
+            return logOperation(operationDesc, joinPoint);
         }
 
         return joinPoint.proceed();
@@ -232,7 +232,7 @@ public class LogAspect {
         }
 
         if (operationDesc != null) {
-            logOperation(operationDesc, joinPoint);
+            return logOperation(operationDesc, joinPoint);
         }
 
         return joinPoint.proceed();

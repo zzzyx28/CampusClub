@@ -60,15 +60,17 @@ const fetchAccounts = async () => {
     // 从API获取用户列表
     const response = await userApi.listAllUsers();
     if (response.code === 200) {
-      accounts.value = response.data;
+      accounts.value = Array.isArray(response.data) ? response.data : [];
       console.log('获取到的用户数据:', accounts.value);
     } else {
-      throw new Error(response.message || '获取用户列表失败');
+      throw new Error(response.msg || response.message || '获取用户列表失败');
     }
     filterAccounts();
   } catch (error) {
     console.error('获取用户列表失败:', error);
-    ElMessage.error('获取用户列表失败');
+    accounts.value = [];
+    filterAccounts();
+    ElMessage.error('获取用户列表失败: ' + (error.message || '未知错误'));
   } finally {
     loading.value = false;
   }
