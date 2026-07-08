@@ -66,7 +66,11 @@ public class AgentMemoryServiceImpl implements AgentMemoryService {
         if (userId != null) {
             User user = userService.getById(userId);
             if (user != null) {
-                context.append("登录用户画像：")
+                context.append("登录用户画像：userId=")
+                        .append(user.getId())
+                        .append("，用户名 ")
+                        .append(nullSafe(user.getUsername(), "未知"))
+                        .append("，姓名 ")
                         .append(nullSafe(user.getRealName(), "姓名未知"))
                         .append("，会员等级 ")
                         .append(user.getMemberLevel() != null ? user.getMemberLevel() : "未知")

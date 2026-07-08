@@ -7,20 +7,25 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.backend.entity.Activity;
 import com.backend.entity.Registration;
 import com.backend.entity.User;
+import com.backend.exception.ForbiddenException;
 import com.backend.service.ActivityService;
 import com.backend.service.AiService;
 import com.backend.service.DashboardService;
 import com.backend.service.RegistrationService;
 import com.backend.service.UserService;
+import com.backend.util.AiRequestContext;
 import com.backend.vo.DashboardData;
 import com.backend.vo.RegistrationDetail;
+import com.backend.vo.UserProfileVo;
 
 @Service
 public class AiServiceImpl implements AiService {
@@ -38,27 +43,26 @@ public class AiServiceImpl implements AiService {
     private UserService userService;
 
     @Override
-    public void cancelRegistration(Long registrationId, String name) {
+    public void cancelRegistration(Long registrationId) {
+        if (registrationId == null) {
+            throw new RuntimeException("报名 ID 不能为空");
+        }
         RegistrationDetail detail = registrationService.getRegistrationDetailById(registrationId);
         if (detail == null) {
             throw new RuntimeException("报名记录不存在");
         }
-        if (detail.getRealName().equals(name)) {
-            boolean result = registrationService.cancelRegistration(registrationId);
-            if (!result) {
-                throw new RuntimeException("取消报名失败");
-            }
-        } else {
-            throw new RuntimeException("姓名不匹配，无法取消报名");
+        ensureRegistrationAccess(detail);
+        boolean result = registrationService.cancelRegistration(registrationId);
+        if (!result) {
+            throw new RuntimeException("取消报名失败");
         }
     }
 
     @Override
-    public Registration createRegistration(Long userId, Long activityId, String tierName, String name) {
-        if (userId == null || activityId == null) {
-            throw new RuntimeException("用户ID和活动ID不能为空");
-        }
-        Registration registration = registrationService.createRegistration(userId, activityId, tierName);
+    public Registration createRegistration(Long activityId, String activityCode, String tierName) {
+        Long userId = AiRequestContext.requireUserId();
+        Activity activity = resolveActivity(activityId, activityCode);
+        Registration registration = registrationService.createRegistration(userId, activity.getId(), tierName);
         if (registration == null) {
             throw new RuntimeException("报名失败");
         }
@@ -68,25 +72,28 @@ public class AiServiceImpl implements AiService {
     @Override
     public RegistrationDetail getRegistrationDetail(Long registrationId) {
         if (registrationId == null) {
-            throw new RuntimeException("报名ID不能为空");
+            throw new RuntimeException("报名 ID 不能为空");
         }
         RegistrationDetail detail = registrationService.getRegistrationDetailById(registrationId);
         if (detail == null) {
             throw new RuntimeException("报名记录不存在");
         }
+        ensureRegistrationAccess(detail);
         return detail;
     }
 
     @Override
-    public List<RegistrationDetail> getRegistrationsByName(String realName) {
-        if (realName == null || realName.trim().isEmpty()) {
-            throw new RuntimeException("用户姓名不能为空");
-        }
-        List<RegistrationDetail> registrations = registrationService.getRegistrationDetailsByName(realName);
+    public List<RegistrationDetail> getMyRegistrations() {
+        Long userId = AiRequestContext.requireUserId();
+        List<Registration> registrations = registrationService.listByUserId(userId);
         if (registrations == null || registrations.isEmpty()) {
-            throw new RuntimeException("未找到该用户的报名记录");
+            return List.of();
         }
-        return registrations;
+        return registrations.stream()
+                .filter(reg -> reg.getStatus() == null || reg.getStatus() != 2)
+                .map(reg -> registrationService.getRegistrationDetailById(reg.getId()))
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     @Override
@@ -144,19 +151,20 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public DashboardData getDashboardOverview() {
+        if (!AiRequestContext.isAdmin()) {
+            throw new ForbiddenException("仪表盘数据仅管理员可查看");
+        }
         return dashboardService.getDashboardData();
     }
 
     @Override
-    public User getUserProfile(Long userId) {
-        if (userId == null) {
-            throw new RuntimeException("用户ID不能为空，请先登录");
-        }
+    public UserProfileVo getCurrentUserProfile() {
+        Long userId = AiRequestContext.requireUserId();
         User user = userService.getById(userId);
         if (user == null) {
             throw new RuntimeException("用户不存在");
         }
-        return user;
+        return UserProfileVo.from(user);
     }
 
     @Override
@@ -176,6 +184,7 @@ public class AiServiceImpl implements AiService {
             List<Registration> regs = registrationService.listByActivityId(activity.getId());
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("activityId", activity.getId());
+            entry.put("activityCode", activity.getActivityCode());
             entry.put("title", activity.getTitle());
             entry.put("clubName", activity.getClubName());
             entry.put("activityType", activity.getActivityType());
@@ -186,5 +195,31 @@ public class AiServiceImpl implements AiService {
             stats.add(entry);
         }
         return stats;
+    }
+
+    private Activity resolveActivity(Long activityId, String activityCode) {
+        if (activityId != null) {
+            Activity activity = activityService.getById(activityId);
+            if (activity != null) {
+                return activity;
+            }
+        }
+        if (StringUtils.hasText(activityCode)) {
+            Activity activity = activityService.getByActivityCode(activityCode.trim());
+            if (activity != null) {
+                return activity;
+            }
+        }
+        throw new RuntimeException("活动不存在，请先调用活动查询工具，并使用返回结果中的 id 或 activityCode");
+    }
+
+    private void ensureRegistrationAccess(RegistrationDetail detail) {
+        Long currentUserId = AiRequestContext.currentUserId();
+        if (currentUserId == null) {
+            throw new ForbiddenException("未登录");
+        }
+        if (!AiRequestContext.isAdmin() && !currentUserId.equals(detail.getUserId())) {
+            throw new ForbiddenException("无权访问他人报名记录");
+        }
     }
 }

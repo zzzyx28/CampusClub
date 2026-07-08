@@ -5,19 +5,19 @@ import java.util.Map;
 
 import com.backend.entity.Activity;
 import com.backend.entity.Registration;
-import com.backend.entity.User;
 import com.backend.vo.DashboardData;
 import com.backend.vo.RegistrationDetail;
+import com.backend.vo.UserProfileVo;
 
 public interface AiService {
 
-    void cancelRegistration(Long registrationId, String name);
+    void cancelRegistration(Long registrationId);
 
-    Registration createRegistration(Long userId, Long activityId, String tierName, String name);
+    Registration createRegistration(Long activityId, String activityCode, String tierName);
 
     RegistrationDetail getRegistrationDetail(Long registrationId);
 
-    List<RegistrationDetail> getRegistrationsByName(String realName);
+    List<RegistrationDetail> getMyRegistrations();
 
     Activity getActivityByTicketCode(String ticketCode);
 
@@ -29,7 +29,7 @@ public interface AiService {
 
     DashboardData getDashboardOverview();
 
-    User getUserProfile(Long userId);
+    UserProfileVo getCurrentUserProfile();
 
     List<Map<String, Object>> getActivityStats(String activityTitle);
 }

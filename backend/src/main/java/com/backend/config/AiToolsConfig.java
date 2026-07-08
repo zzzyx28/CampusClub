@@ -2,11 +2,11 @@ package com.backend.config;
 
 import com.backend.entity.Activity;
 import com.backend.entity.Registration;
-import com.backend.entity.User;
 import com.backend.service.AiService;
 import com.backend.util.AiToolJson;
 import com.backend.vo.DashboardData;
 import com.backend.vo.RegistrationDetail;
+import com.backend.vo.UserProfileVo;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,23 +27,21 @@ public class AiToolsConfig {
     }
 
     public record CancelRegistrationRequest(
-            @JsonPropertyDescription("报名主键 ID（数字），不是票种编码") Long registrationId,
-            @JsonPropertyDescription("报名人真实姓名，须与报名用户一致") String name) {
+            @JsonPropertyDescription("报名主键 ID（数字），来自 getMyRegistrations 结果中的 registrationId") Long registrationId) {
     }
 
     public record RegistrationDetailRequest(
             @JsonPropertyDescription("报名主键 ID") Long registrationId) {
     }
 
-    public record RegistrationsByNameRequest(
-            @JsonPropertyDescription("用户真实姓名，用于列出该姓名下的报名") String realName) {
+    public record MyRegistrationsRequest(
+            @JsonPropertyDescription("无需参数，自动查询当前登录用户") String unused) {
     }
 
     public record CreateRegistrationRequest(
-            @JsonPropertyDescription("用户 ID，须与当前登录用户一致；若用户未登录则先请用户登录") Long userId,
-            @JsonPropertyDescription("活动主键 ID，来自 searchActivities 等查询结果") Long activityId,
-            @JsonPropertyDescription("票档名称，如普通票；不确定可传 null 或空串") String tierName,
-            @JsonPropertyDescription("报名人真实姓名") String name) {
+            @JsonPropertyDescription("活动主键 ID，来自活动查询结果的 id 字段；与 activityCode 二选一") Long activityId,
+            @JsonPropertyDescription("活动编码，如 ACT-ALGO-001；与 activityId 二选一") String activityCode,
+            @JsonPropertyDescription("票档名称，如普通票；不确定可传 null") String tierName) {
     }
 
     public record ActivityByTicketCodeRequest(
@@ -64,6 +62,18 @@ public class AiToolsConfig {
             @JsonPropertyDescription("返回条数；用户说「最近有什么活动」可给 5～10；不传则默认 5，最大 30") Integer limit) {
     }
 
+    public record DashboardOverviewRequest(
+            @JsonPropertyDescription("无需参数，仅管理员可用") String unused) {
+    }
+
+    public record CurrentUserProfileRequest(
+            @JsonPropertyDescription("无需参数，自动返回当前登录用户") String unused) {
+    }
+
+    public record ActivityStatsRequest(
+            @JsonPropertyDescription("活动标题关键词，可选；不传则返回近期所有活动的报名统计") String activityTitle) {
+    }
+
     @Bean
     @Description("列出即将开放报名或即将开始的活动。用于「最近有什么活动」「还能报什么」等未指定类型的问法。")
     public Function<ListUpcomingActivitiesRequest, String> listUpcomingActivities() {
@@ -82,11 +92,11 @@ public class AiToolsConfig {
     }
 
     @Bean
-    @Description("取消报名。需报名 ID 与姓名校验通过；活动开始前 24 小时内可能不可取消（以业务规则为准）。")
+    @Description("取消当前登录用户本人的报名。需要报名 ID；系统会自动校验归属，无需提供姓名。")
     public Function<CancelRegistrationRequest, String> cancelRegistration() {
         return request -> {
             try {
-                aiService.cancelRegistration(request.registrationId(), request.name());
+                aiService.cancelRegistration(request.registrationId());
                 return AiToolJson.ok("报名已取消", request.registrationId());
             } catch (Exception e) {
                 return AiToolJson.fail(e.getMessage() != null ? e.getMessage() : "取消失败");
@@ -95,7 +105,7 @@ public class AiToolsConfig {
     }
 
     @Bean
-    @Description("按报名 ID 查询报名与活动详情，用于回答用户或人工咨询前核对。")
+    @Description("按报名 ID 查询报名与活动详情，仅限当前用户本人或管理员。")
     public Function<RegistrationDetailRequest, String> getRegistrationDetail() {
         return request -> {
             try {
@@ -108,25 +118,28 @@ public class AiToolsConfig {
     }
 
     @Bean
-    @Description("按用户真实姓名查询该用户名下未取消的报名列表。")
-    public Function<RegistrationsByNameRequest, String> getRegistrationsByName() {
+    @Description("查询当前登录用户名下未取消的报名列表。用于「我的报名」「我报了哪些」。")
+    public Function<MyRegistrationsRequest, String> getMyRegistrations() {
         return request -> {
             try {
-                List<RegistrationDetail> list = aiService.getRegistrationsByName(request.realName());
+                List<RegistrationDetail> list = aiService.getMyRegistrations();
+                if (list.isEmpty()) {
+                    return AiToolJson.ok("当前暂无有效报名", list);
+                }
                 return AiToolJson.ok("共 " + list.size() + " 条报名", list);
             } catch (Exception e) {
-                return AiToolJson.fail(e.getMessage() != null ? e.getMessage() : "未找到报名记录");
+                return AiToolJson.fail(e.getMessage() != null ? e.getMessage() : "查询报名失败");
             }
         };
     }
 
     @Bean
-    @Description("创建活动报名。userId 须为当前登录用户；activityId 来自活动查询；可先确认票档再报名。")
+    @Description("为当前登录用户创建活动报名。activityId 或 activityCode 至少提供一个；票档不确定可传 null。")
     public Function<CreateRegistrationRequest, String> createRegistration() {
         return request -> {
             try {
                 Registration registration = aiService.createRegistration(
-                        request.userId(), request.activityId(), request.tierName(), request.name());
+                        request.activityId(), request.activityCode(), request.tierName());
                 return AiToolJson.ok("报名成功", registration);
             } catch (Exception e) {
                 return AiToolJson.fail(e.getMessage() != null ? e.getMessage() : "报名失败");
@@ -174,20 +187,8 @@ public class AiToolsConfig {
         };
     }
 
-    public record DashboardOverviewRequest(
-            @JsonPropertyDescription("无需参数，直接调用即可") String unused) {
-    }
-
-    public record UserProfileRequest(
-            @JsonPropertyDescription("用户 ID，从系统上下文中的当前登录用户 ID 获取") Long userId) {
-    }
-
-    public record ActivityStatsRequest(
-            @JsonPropertyDescription("活动标题关键词，可选；不传则返回近期所有活动的报名统计") String activityTitle) {
-    }
-
     @Bean
-    @Description("获取仪表盘概览数据：今日活动数、今日报名数、活跃用户数、近期趋势。用于「最近报名情况怎么样」「今天有什么数据」等统计类问题。")
+    @Description("获取仪表盘概览数据，仅管理员可用。")
     public Function<DashboardOverviewRequest, String> getDashboardOverview() {
         return request -> {
             try {
@@ -200,11 +201,11 @@ public class AiToolsConfig {
     }
 
     @Bean
-    @Description("获取当前登录用户的个人信息、社团活跃度等级及对应权益。用于「我的等级」「我有什么权益」「我的个人信息」等。")
-    public Function<UserProfileRequest, String> getUserProfile() {
+    @Description("获取当前登录用户的个人信息、社团活跃度等级及权益。无需传 userId。")
+    public Function<CurrentUserProfileRequest, String> getCurrentUserProfile() {
         return request -> {
             try {
-                User user = aiService.getUserProfile(request.userId());
+                UserProfileVo user = aiService.getCurrentUserProfile();
                 return AiToolJson.ok("用户信息", user);
             } catch (Exception e) {
                 return AiToolJson.fail(e.getMessage() != null ? e.getMessage() : "获取用户信息失败");
@@ -213,7 +214,7 @@ public class AiToolsConfig {
     }
 
     @Bean
-    @Description("查询活动的报名统计情况（各活动报名人数）。可指定活动标题关键词筛选，不传则返回近期活动统计。用于「XX活动有多少人报名」「哪个活动最热门」等。")
+    @Description("查询活动的报名统计情况（各活动报名人数）。可指定活动标题关键词筛选，不传则返回近期活动统计。")
     public Function<ActivityStatsRequest, String> getActivityStats() {
         return request -> {
             try {
