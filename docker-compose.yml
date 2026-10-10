@@ -1,63 +1,319 @@
+name: "campusclub-cloud"
 services:
   mysql:
-    image: mysql:8.0
+    image: "mysql:8.0.46"
+    entrypoint: ["bash", "-c", "cp /campus-init.sh /docker-entrypoint-initdb.d/01-databases.sh && chmod 644 /docker-entrypoint-initdb.d/01-databases.sh && exec docker-entrypoint.sh mysqld"]
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: campusclub
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      USER_DB_PASSWORD: "${USER_DB_PASSWORD}"
+      TICKET_DB_PASSWORD: "${TICKET_DB_PASSWORD}"
+      AI_DB_PASSWORD: "${AI_DB_PASSWORD}"
     ports:
-      - "3306:3306"
+      - "127.0.0.1:13306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - "cloud_mysql:/var/lib/mysql"
+      - "./deploy/mysql/init-databases.sh:/campus-init.sh:ro"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
+      test:
+        - "CMD-SHELL"
+        - "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysqladmin ping -h localhost -uroot"
+      interval: "5s"
+      timeout: "3s"
+      retries: 30
   mongodb:
-    image: mongo:7
-    ports:
-      - "27017:27017"
+    image: "mongo:7.0"
     volumes:
-      - mongo_data:/data/db
-
+      - "cloud_mongo:/data/db"
+    healthcheck:
+      test:
+        - "CMD"
+        - "mongosh"
+        - "--quiet"
+        - "--eval"
+        - "db.runCommand({ping:1}).ok"
+      interval: "10s"
+      timeout: "5s"
+      retries: 20
   redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
+    image: "redis/redis-stack-server:7.4.0-v3"
+    volumes:
+      - "cloud_redis:/data"
+    healthcheck:
+      test:
+        - "CMD"
+        - "redis-cli"
+        - "ping"
+      interval: "5s"
+      timeout: "3s"
+      retries: 20
+  nacos:
+    image: "nacos/nacos-server:v3.0.3"
     environment:
-      SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/campusclub?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
-      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/campusclub
-      SPRING_DATA_REDIS_HOST: redis
-      APP_JWT_SECRET: docker-jwt-secret-must-be-at-least-32-chars
-      APP_DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      MODE: "standalone"
+      NACOS_AUTH_ENABLE: "true"
+      NACOS_AUTH_TOKEN: "${NACOS_AUTH_TOKEN}"
+      NACOS_AUTH_IDENTITY_KEY: "campus"
+      NACOS_AUTH_IDENTITY_VALUE: "campus-local"
+      JVM_XMS: "256m"
+      JVM_XMX: "384m"
+      JVM_XMN: "128m"
+    ports:
+      - "127.0.0.1:8848:8848"
+      - "127.0.0.1:9848:9848"
+      - "127.0.0.1:18088:8080"
+    volumes:
+      - "cloud_nacos:/home/nacos/data"
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "curl -fsS http://localhost:8848/nacos/v3/admin/core/state >/dev/null"
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+  nameserver:
+    image: "apache/rocketmq:5.3.1"
+    command:
+      - "sh"
+      - "mqnamesrv"
+    environment:
+      JAVA_OPT_EXT: "-Xms128m -Xmx256m -Xmn128m"
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "bash -c \"echo > /dev/tcp/localhost/9876\""
+      interval: "5s"
+      timeout: "3s"
+      retries: 30
+  mq-volume-init:
+    image: "apache/rocketmq:5.3.1"
+    user: "0:0"
+    entrypoint: ["sh", "-c", "chown -R 3000:3000 /home/rocketmq/store"]
+    volumes: ["cloud_mq:/home/rocketmq/store"]
+  rocketmq:
+    image: "apache/rocketmq:5.3.1"
+    command:
+      - "sh"
+      - "mqbroker"
+      - "-c"
+      - "/home/rocketmq/broker.conf"
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx384m -Xmn128m"
+      NAMESRV_ADDR: "nameserver:9876"
+    volumes:
+      - "./deploy/rocketmq/broker.conf:/home/rocketmq/broker.conf:ro"
+      - "cloud_mq:/home/rocketmq/store"
+    depends_on:
+      mq-volume-init:
+        condition: "service_completed_successfully"
+      nameserver:
+        condition: "service_healthy"
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "bash -c \"echo > /dev/tcp/localhost/10911\""
+      interval: "5s"
+      timeout: "3s"
+      retries: 30
+  user:
+    image: "campusclub/user:local"
+    build:
+      context: "./backend"
+      args:
+        MODULE: "campus-user-service"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+      NACOS_ADDR: "nacos:8848"
+      NACOS_PASSWORD: "${NACOS_PASSWORD:-nacos}"
+      REDIS_HOST: "redis"
+      JWT_SECRET: "${JWT_SECRET:?run scripts/init-cloud-env.py}"
+      INTERNAL_USER_SECRET: "${INTERNAL_USER_SECRET:?required}"
+      INTERNAL_TICKET_SECRET: "${INTERNAL_TICKET_SECRET:?required}"
+      INTERNAL_AI_SECRET: "${INTERNAL_AI_SECRET:?required}"
+      MESSAGING_ENABLED: "true"
+      ROCKETMQ_NAMESERVER: "nameserver:9876"
+      OTEL_ENDPOINT: "http://jaeger:4318/v1/traces"
+      TRACING_PROBABILITY: "1.0"
+      DB_URL: "jdbc:mysql://mysql:3306/campus_user?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai"
+      DB_USERNAME: "campus_user"
+      DB_PASSWORD: "${USER_DB_PASSWORD}"
+      SPRING_PROFILES_ACTIVE: "demo"
+      MAIL_STUB: "${MAIL_STUB:-true}"
     depends_on:
       mysql:
-        condition: service_healthy
-      mongodb:
-        condition: service_started
+        condition: "service_healthy"
       redis:
-        condition: service_started
-
+        condition: "service_healthy"
+      nacos:
+        condition: "service_healthy"
+      rocketmq:
+        condition: "service_healthy"
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "bash -c \"echo > /dev/tcp/localhost/8080\""
+      interval: "10s"
+      timeout: "3s"
+      retries: 30
+      start_period: "30s"
+  ticket:
+    image: "campusclub/ticket:local"
+    build:
+      context: "./backend"
+      args:
+        MODULE: "campus-ticket-service"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+      NACOS_ADDR: "nacos:8848"
+      NACOS_PASSWORD: "${NACOS_PASSWORD:-nacos}"
+      REDIS_HOST: "redis"
+      JWT_SECRET: "${JWT_SECRET:?run scripts/init-cloud-env.py}"
+      INTERNAL_USER_SECRET: "${INTERNAL_USER_SECRET:?required}"
+      INTERNAL_TICKET_SECRET: "${INTERNAL_TICKET_SECRET:?required}"
+      INTERNAL_AI_SECRET: "${INTERNAL_AI_SECRET:?required}"
+      MESSAGING_ENABLED: "true"
+      ROCKETMQ_NAMESERVER: "nameserver:9876"
+      OTEL_ENDPOINT: "http://jaeger:4318/v1/traces"
+      TRACING_PROBABILITY: "1.0"
+      DB_URL: "jdbc:mysql://mysql:3306/campus_ticket?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai"
+      DB_USERNAME: "campus_ticket"
+      DB_PASSWORD: "${TICKET_DB_PASSWORD}"
+      SPRING_PROFILES_ACTIVE: "demo"
+    depends_on:
+      mysql:
+        condition: "service_healthy"
+      redis:
+        condition: "service_healthy"
+      nacos:
+        condition: "service_healthy"
+      rocketmq:
+        condition: "service_healthy"
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "bash -c \"echo > /dev/tcp/localhost/8080\""
+      interval: "10s"
+      timeout: "3s"
+      retries: 30
+      start_period: "30s"
+  ai:
+    image: "campusclub/ai:local"
+    build:
+      context: "./backend"
+      args:
+        MODULE: "campus-ai-service"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx512m"
+      NACOS_ADDR: "nacos:8848"
+      NACOS_PASSWORD: "${NACOS_PASSWORD:-nacos}"
+      REDIS_HOST: "redis"
+      JWT_SECRET: "${JWT_SECRET:?run scripts/init-cloud-env.py}"
+      INTERNAL_USER_SECRET: "${INTERNAL_USER_SECRET:?required}"
+      INTERNAL_TICKET_SECRET: "${INTERNAL_TICKET_SECRET:?required}"
+      INTERNAL_AI_SECRET: "${INTERNAL_AI_SECRET:?required}"
+      MESSAGING_ENABLED: "true"
+      ROCKETMQ_NAMESERVER: "nameserver:9876"
+      OTEL_ENDPOINT: "http://jaeger:4318/v1/traces"
+      TRACING_PROBABILITY: "1.0"
+      DB_URL: "jdbc:mysql://mysql:3306/campus_ai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai"
+      DB_USERNAME: "campus_ai"
+      DB_PASSWORD: "${AI_DB_PASSWORD}"
+      SPRING_PROFILES_ACTIVE: "${AI_PROFILES:-demo,stub}"
+      MONGODB_URI: "mongodb://mongodb:27017/campusclub_ai"
+      DASHSCOPE_API_KEY: "${DASHSCOPE_API_KEY:-dummy}"
+      DASHSCOPE_ENABLED: "${DASHSCOPE_ENABLED:-false}"
+      OPENAI_ENABLED: "${OPENAI_ENABLED:-false}"
+      OPENAI_COMPATIBLE_API_KEY: "${OPENAI_COMPATIBLE_API_KEY:-dummy}"
+      AI_BASE_URL: "${AI_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode}"
+      AI_CHAT_MODEL: "${AI_CHAT_MODEL:-qwen-plus}"
+      AI_EMBEDDING_MODEL: "${AI_EMBEDDING_MODEL:-text-embedding-v1}"
+    depends_on:
+      mysql:
+        condition: "service_healthy"
+      redis:
+        condition: "service_healthy"
+      nacos:
+        condition: "service_healthy"
+      rocketmq:
+        condition: "service_healthy"
+      mongodb:
+        condition: "service_healthy"
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "bash -c \"echo > /dev/tcp/localhost/8080\""
+      interval: "10s"
+      timeout: "3s"
+      retries: 30
+      start_period: "30s"
+  gateway:
+    image: "campusclub/gateway:local"
+    build:
+      context: "./backend"
+      args:
+        MODULE: "campus-gateway"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+      NACOS_ADDR: "nacos:8848"
+      NACOS_PASSWORD: "${NACOS_PASSWORD:-nacos}"
+      REDIS_HOST: "redis"
+      JWT_SECRET: "${JWT_SECRET:?run scripts/init-cloud-env.py}"
+      INTERNAL_USER_SECRET: "${INTERNAL_USER_SECRET:?required}"
+      INTERNAL_TICKET_SECRET: "${INTERNAL_TICKET_SECRET:?required}"
+      INTERNAL_AI_SECRET: "${INTERNAL_AI_SECRET:?required}"
+      MESSAGING_ENABLED: "true"
+      ROCKETMQ_NAMESERVER: "nameserver:9876"
+      OTEL_ENDPOINT: "http://jaeger:4318/v1/traces"
+      TRACING_PROBABILITY: "1.0"
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      nacos:
+        condition: "service_healthy"
+      redis:
+        condition: "service_healthy"
+      user:
+        condition: "service_healthy"
+      ticket:
+        condition: "service_healthy"
+      ai:
+        condition: "service_healthy"
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: "./frontend"
     ports:
-      - "80:80"
+      - "127.0.0.1:8088:80"
     depends_on:
-      - backend
-
+      - "gateway"
+  jaeger:
+    image: "jaegertracing/all-in-one:1.68.0"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "127.0.0.1:16686:16686"
+  prometheus:
+    image: "prom/prometheus:v3.2.1"
+    profiles:
+      - "monitoring"
+    volumes:
+      - "./deploy/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+    ports:
+      - "127.0.0.1:9090:9090"
+  grafana:
+    image: "grafana/grafana:11.6.0"
+    profiles:
+      - "monitoring"
+    environment:
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "campus-demo-admin"
+    volumes:
+      - "./deploy/monitoring/grafana:/etc/grafana/provisioning:ro"
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - "prometheus"
 volumes:
-  mysql_data:
-  mongo_data:
+  cloud_mysql: {}
+  cloud_mongo: {}
+  cloud_redis: {}
+  cloud_nacos: {}
+  cloud_mq: {}

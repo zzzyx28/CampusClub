@@ -174,7 +174,7 @@ const cancelRegistration = (reg) => {
         await registrationApi.cancelRegistration(reg.id);
         ElMessage.success('报名已取消');
         fetchRegistrations();
-      } catch (error) {
+      } catch {
         ElMessage.error('取消报名失败');
       }
     })
@@ -196,7 +196,7 @@ const completeRegistration = (reg) => {
         await registrationApi.completeRegistration(reg.id);
         ElMessage.success('已标记为已参加');
         fetchRegistrations();
-      } catch (error) {
+      } catch {
         ElMessage.error('操作失败');
       }
     })

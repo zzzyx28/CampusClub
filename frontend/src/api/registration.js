@@ -21,12 +21,12 @@ export function listRegistrationsByActivityId(activityId) {
   return get(`${API_PREFIX}/registration/activity/${activityId}`);
 }
 
-export function createRegistration(data) {
-  return post(`${API_PREFIX}/registration`, data);
+export function createRegistration(data, operationKey = crypto.randomUUID()) {
+  return post(`${API_PREFIX}/registration`, data, { headers: { 'Idempotency-Key': operationKey } });
 }
 
-export function cancelRegistration(id) {
-  return put(`${API_PREFIX}/registration/${id}/cancel`);
+export function cancelRegistration(id, operationKey = crypto.randomUUID()) {
+  return put(`${API_PREFIX}/registration/${id}/cancel`, undefined, { headers: { 'Idempotency-Key': operationKey } });
 }
 
 export function completeRegistration(id) {
@@ -35,4 +35,8 @@ export function completeRegistration(id) {
 
 export function listAllRegistrations() {
   return get(`${API_PREFIX}/registration/admin/list`);
+}
+
+export function getRegistrationOperation(key) {
+  return get(`${API_PREFIX}/registration/operations/${encodeURIComponent(key)}`);
 }

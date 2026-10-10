@@ -105,8 +105,8 @@ const transferToService = () => {
     <!-- 空聊天提示 -->
     <div class="empty-chat" v-else>
       <div v-if="userType === 'user'" class="welcome-message">
-        <h1 class="welcome-title">有什么能帮您？</h1>
-        <p class="welcome-subtitle">您可以询问任何问题，我会尽力为您解答</p>
+        <h1 class="welcome-title">让 Agent 团队一起解决</h1>
+        <p class="welcome-subtitle">活动、报名、政策与数据问题会被拆解给不同专职 Agent，并展示完整协作轨迹。</p>
       </div>
       <el-empty v-else :description="emptyText">
         <slot name="quick-actions">

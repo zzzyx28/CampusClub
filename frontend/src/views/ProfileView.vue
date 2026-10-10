@@ -2,7 +2,6 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import HeaderNav from '@/components/common/HeaderNav.vue';
 import { userApi, registrationApi, conversationApi } from '@/api';
 import { getCurrentUser, isLoggedIn, logout } from '@/utils/auth';
 import { getMemberLevelName } from '@/utils/jwt';
@@ -57,7 +56,7 @@ const memberLevelIcon = computed(() => {
     case 3:
       return 'Trophy';
     case 4:
-      return 'First';
+      return 'GoldMedal';
     case 5:
       return 'Star';
     default:
@@ -1099,4 +1098,4 @@ onMounted(() => {
     margin-bottom: 5px;
   }
 }
-</style> 
+</style>

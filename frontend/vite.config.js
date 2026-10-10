@@ -1,4 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
+import process from 'node:process'
 
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -15,6 +16,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins,
+    build: {
+      // Element Plus is intentionally registered globally; keep the warning
+      // threshold aligned with the measured vendor chunk while route views stay lazy.
+      chunkSizeWarningLimit: 1200
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url))

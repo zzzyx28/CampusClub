@@ -3,7 +3,6 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessageBox, ElMessage } from 'element-plus';
 import HeaderNav from '@/components/common/HeaderNav.vue';
-import SideMenu from '@/components/common/SideMenu.vue';
 import CustomerList from '@/components/service/CustomerList.vue';
 import ChatBox from '@/components/chat/ChatBox.vue';
 import { conversationApi, registrationApi, userApi } from '@/api';
@@ -11,19 +10,11 @@ import { parseJwt } from '@/utils/jwt';
 
 const router = useRouter();
 const username = ref('社团助手');
-const activeMenu = ref('customers');
-const message = ref('');
 const currentChat = ref(null);
 const chatMessages = ref([]);
 const loading = ref(false);
 const serviceUserId = ref(null);
 let pollTimer = null;
-
-// 侧边栏菜单项
-const menuItems = [
-  { index: 'customers', title: '客户信息', icon: 'User' },
-  { index: 'registrations', title: '报名管理', icon: 'Ticket' }
-];
 
 // 客户会话列表
 const customers = ref([]);
@@ -320,11 +311,6 @@ const getCustomerRegistrations = () => {
   return registrations.value;
 };
 
-// 进入个人中心
-const goToProfile = () => {
-  router.push('/profile');
-};
-
 // 格式化日期时间
 const formatDateTime = (dateString) => {
   if (!dateString) return '未知';
@@ -427,13 +413,14 @@ const cancelRegistrationAction = async (reg) => {
         ElMessage.error('取消报名失败: ' + (error.message || '未知错误'));
       }
     }).catch(() => {});
-  } catch (error) {
+  } catch {
     ElMessage.error('操作失败');
   }
 };
 
 // 组件挂载时初始化数据
 onMounted(initData);
+onUnmounted(stopPolling);
 </script>
 
 <template>

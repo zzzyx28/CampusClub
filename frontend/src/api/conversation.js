@@ -41,7 +41,7 @@ export function listConversationsByServiceUserId(serviceUserId) {
  * 获取所有已转人工的会话
  * @returns {Promise} - 返回会话列表
  */
-export function listAllConversationsByServiceUserId(serviceUserId) {
+export function listAllConversationsByServiceUserId() {
   return get(`${API_PREFIX}/conversation/transferred`);
 }
 

@@ -7,6 +7,7 @@ import * as logApi from './log';
 import * as dashboardApi from './dashboard';
 import * as promptApi from './prompt';
 import * as knowledgeApi from './knowledge';
+import * as orchestrationApi from './orchestration';
 
 export {
   authApi,
@@ -17,5 +18,6 @@ export {
   logApi,
   dashboardApi,
   promptApi,
-  knowledgeApi
+  knowledgeApi,
+  orchestrationApi
 };

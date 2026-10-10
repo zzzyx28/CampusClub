@@ -1,7 +1,7 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue';
 
-const props = defineProps({
+defineProps({
   menuItems: {
     type: Array,
     required: true,

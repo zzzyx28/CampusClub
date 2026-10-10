@@ -4,7 +4,8 @@ import {useRouter} from 'vue-router';
 import {ElMessage, ElMessageBox} from 'element-plus';
 import HeaderNav from '@/components/common/HeaderNav.vue';
 import ChatBox from '@/components/chat/ChatBox.vue';
-import {conversationApi} from '@/api';
+import AgentRunPanel from '@/components/chat/AgentRunPanel.vue';
+import {conversationApi, orchestrationApi} from '@/api';
 import {parseJwt} from '@/utils/jwt';
 import {getToken} from '@/utils/auth';
 
@@ -20,7 +21,11 @@ const isTransferToService = ref(false);
 // SSE 相关
 let eventSource = null;
 const isReceivingStream = ref(false);
-const currentStreamMessage = ref('');
+const agentRun = ref(null);
+const agentEvents = ref([]);
+const approvalLoading = ref(false);
+let currentAiMessageIndex = -1;
+let lastEventSequence = 0;
 
 let pollTimer = null; // ⭐ 新增：轮询定时器
 
@@ -173,86 +178,135 @@ const logMessage = async (messageText, speaker) => {
   }
 };
 
-// 创建SSE连接接收AI流式响应
-const createSSEConnection = (message) => {
-  return new Promise((resolve, reject) => {
-    // 关闭之前的连接
-    if (eventSource) {
-      eventSource.close();
+const closeAgentStream = () => {
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
+  }
+  isReceivingStream.value = false;
+};
+
+const updateTaskState = (agentEvent) => {
+  const task = agentRun.value?.tasks?.find(item => item.taskId === agentEvent.taskId);
+  if (!task) return;
+  if (agentEvent.type === 'TASK_STARTED') task.status = 'RUNNING';
+  if (['TASK_COMPLETED', 'TASK_FAILED'].includes(agentEvent.type)) {
+    task.status = agentEvent.payload?.status || (agentEvent.type === 'TASK_COMPLETED' ? 'COMPLETED' : 'FAILED');
+    task.attempts = agentEvent.payload?.attempts;
+    task.latencyMs = agentEvent.payload?.latencyMs;
+  }
+};
+
+const setCurrentAiContent = (content) => {
+  if (currentAiMessageIndex >= 0 && chatMessages.value[currentAiMessageIndex]) {
+    chatMessages.value[currentAiMessageIndex].content = content;
+  }
+};
+
+const finishAgentRun = (answer, status) => {
+  closeAgentStream();
+  if (agentRun.value) agentRun.value.status = status;
+  const finalAnswer = answer || '本次 Agent 编排没有返回可用结果。';
+  setCurrentAiContent(finalAnswer);
+  logMessage(finalAnswer, 'assistant');
+};
+
+const handleAgentEvent = (agentEvent) => {
+  if (!agentEvent?.sequence || agentEvent.sequence <= lastEventSequence) return;
+  lastEventSequence = agentEvent.sequence;
+  agentEvents.value.push(agentEvent);
+  updateTaskState(agentEvent);
+
+  if (agentEvent.type === 'PLAN_STARTED' && agentRun.value) agentRun.value.status = 'RUNNING';
+  if (agentEvent.type === 'APPROVAL_GRANTED' && agentRun.value) agentRun.value.status = 'RUNNING';
+
+  if (agentEvent.type === 'APPROVAL_REQUIRED') {
+    closeAgentStream();
+    agentRun.value.status = 'WAITING_APPROVAL';
+    const draft = agentEvent.payload?.draftAnswer || '只读核验已完成。';
+    setCurrentAiContent(`${draft}\n\n该操作会修改报名数据，请在右侧协作轨迹中批准或拒绝。`);
+  }
+
+  if (agentEvent.type === 'RUN_COMPLETED') {
+    finishAgentRun(agentEvent.payload?.answer, agentEvent.payload?.status || 'COMPLETED');
+  }
+  if (agentEvent.type === 'RUN_FAILED') {
+    finishAgentRun(agentEvent.payload?.answer || '本次 Agent 编排失败，请稍后重试。', 'FAILED');
+  }
+  if (agentEvent.type === 'RUN_CANCELLED') {
+    finishAgentRun(agentEvent.payload?.answer || '本次操作已取消。', 'CANCELLED');
+  }
+};
+
+// 订阅持久化运行事件；断线重连通过事件序号避免重复消费。
+const connectAgentEvents = (runId) => {
+  closeAgentStream();
+  isReceivingStream.value = true;
+  const params = new URLSearchParams({ after: String(lastEventSequence) });
+  const token = getToken();
+  if (token) params.set('token', token);
+  const baseApi = import.meta.env.VITE_APP_BASE_API || '/api';
+  eventSource = new EventSource(`${baseApi}/agent-runs/${runId}/events?${params.toString()}`);
+  eventSource.onopen = () => { isReceivingStream.value = true; };
+  eventSource.onmessage = (event) => {
+    try {
+      handleAgentEvent(JSON.parse(event.data));
+    } catch (error) {
+      console.error('解析 Agent 事件失败:', error);
     }
+  };
+  eventSource.onerror = (error) => {
+    console.warn('Agent 事件流暂时断开，浏览器将自动重连', error);
+  };
+};
 
-    const params = new URLSearchParams();
-    params.set('message', message);
-    if (conversationUuid.value) {
-      params.set('conversationId', conversationUuid.value);
-    }
-    if (currentUserId.value != null && currentUserId.value !== '') {
-      params.set('userId', String(currentUserId.value));
-    }
-    const token = getToken();
-    if (token) {
-      params.set('token', token);
-    }
-    const baseApi = import.meta.env.VITE_APP_BASE_API || 'http://localhost:8080/api';
-    const url = `${baseApi}/ai/generateStreamAsString?${params.toString()}`;
-    eventSource = new EventSource(url);
+const cancelActiveAgentRun = async () => {
+  if (!agentRun.value || ['COMPLETED', 'PARTIALLY_COMPLETED', 'FAILED', 'CANCELLED'].includes(agentRun.value.status)) return;
+  try {
+    const response = await orchestrationApi.cancelRun(agentRun.value.id);
+    agentRun.value = response.data;
+  } catch (error) {
+    console.warn('取消 Agent 运行失败:', error);
+  } finally {
+    closeAgentStream();
+  }
+};
 
-    let aiResponse = '';
-    let aiMessageIndex = -1;
-
-    // 先添加一个空的AI消息占位
-    const aiMsg = {
-      content: '',
-      type: 'ai',
-      time: new Date().toLocaleTimeString()
-    };
-    chatMessages.value.push(aiMsg);
-    aiMessageIndex = chatMessages.value.length - 1;
-
-    eventSource.onmessage = (event) => {
-      const data = event.data;
-
-      if (data === '[complete]') {
-        // 流式响应完成
-        eventSource.close();
-        eventSource = null;
-        isReceivingStream.value = false;
-
-        // 记录AI回复到后端
-        logMessage(aiResponse, 'assistant');
-
-        resolve(aiResponse);
-      } else {
-        // 累积AI响应内容
-        aiResponse += data;
-
-        // 实时更新界面上的AI消息
-        if (aiMessageIndex >= 0) {
-          chatMessages.value[aiMessageIndex].content = aiResponse;
-        }
-      }
-    };
-
-    eventSource.onerror = (error) => {
-      console.error('SSE连接错误:', error);
-      eventSource.close();
-      eventSource = null;
-      isReceivingStream.value = false;
-
-      // 如果没有收到任何响应，显示错误消息
-      if (!aiResponse) {
-        if (aiMessageIndex >= 0) {
-          chatMessages.value[aiMessageIndex].content = '抱歉，AI服务暂时不可用，请稍后再试。';
-        }
-      }
-
-      reject(error);
-    };
-
-    eventSource.onopen = () => {
-      isReceivingStream.value = true;
-    };
+const createAgentRun = async (message) => {
+  const idempotencyKey = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+  const response = await orchestrationApi.startRun({
+    message,
+    conversationId: conversationUuid.value
+  }, idempotencyKey);
+  agentRun.value = response.data;
+  agentEvents.value = [];
+  lastEventSequence = 0;
+  chatMessages.value.push({
+    content: '正在拆解任务并调度专职 Agent…',
+    type: 'ai',
+    time: new Date().toLocaleTimeString()
   });
+  currentAiMessageIndex = chatMessages.value.length - 1;
+  connectAgentEvents(agentRun.value.id);
+};
+
+const handleApproval = async (approved) => {
+  if (!agentRun.value || approvalLoading.value) return;
+  try {
+    approvalLoading.value = true;
+    const response = await orchestrationApi.decideApproval(agentRun.value.id, approved);
+    agentRun.value = response.data;
+    if (approved) {
+      setCurrentAiContent('审批已通过，事务 Agent 正在核对并执行…');
+      connectAgentEvents(agentRun.value.id);
+    } else {
+      finishAgentRun(response.data.finalAnswer, 'CANCELLED');
+    }
+  } catch (error) {
+    ElMessage.error(error.message || '审批操作失败');
+  } finally {
+    approvalLoading.value = false;
+  }
 };
 
 // 发送消息处理
@@ -276,8 +330,7 @@ const handleSendMessage = async (messageText) => {
 
     if (!isTransferToService.value) {
       loading.value = true;
-      // 使用SSE接收AI流式响应
-      await createSSEConnection(messageText);
+      await createAgentRun(messageText);
     }
 
   } catch (error) {
@@ -303,11 +356,7 @@ const handleCloseConversation = async () => {
       try {
         loading.value = true;
 
-        // 关闭SSE连接
-        if (eventSource) {
-          eventSource.close();
-          eventSource = null;
-        }
+        await cancelActiveAgentRun();
         stopPolling(); // ⭐ 停止轮询
 
         if (conversationUuid.value) {
@@ -357,11 +406,7 @@ const handleTransferToService = async () => {
           return;
         }
 
-        // 关闭SSE连接
-        if (eventSource) {
-          eventSource.close();
-          eventSource = null;
-        }
+        await cancelActiveAgentRun();
 
         // 调用后端API转接到人工咨询
         const response = await conversationApi.transferConversation(conversationUuid.value, {
@@ -399,11 +444,6 @@ const handleTransferToService = async () => {
     });
 };
 
-// 进入个人中心
-const goToProfile = () => {
-  router.push('/profile');
-};
-
 // 组件卸载时清理SSE连接
 onUnmounted(() => {
   if (eventSource) {
@@ -426,27 +466,35 @@ onMounted(() => {
 
     <!-- 主要内容区域 -->
     <main class="main-content cc-page-bg">
-      <div class="chat-container">
-        <!-- 使用聊天组件 -->
-        <ChatBox
-          :messages="chatMessages"
-          placeholder="请输入您的问题"
-          empty-text="有什么能帮您？"
-          user-type="user"
-          :loading="loading"
-          :disabled="!conversationActive || isReceivingStream"
-          @send="handleSendMessage"
-          @closeConversation="handleCloseConversation"
-          @transferToService="handleTransferToService"
-        />
+      <div class="agent-workspace">
+        <div class="chat-container">
+          <ChatBox
+            :messages="chatMessages"
+            placeholder="描述一个需要 Agent 团队协作的问题"
+            empty-text="有什么能帮您？"
+            user-type="user"
+            :loading="loading"
+            :disabled="!conversationActive || isReceivingStream || agentRun?.status === 'WAITING_APPROVAL'"
+            @send="handleSendMessage"
+            @closeConversation="handleCloseConversation"
+            @transferToService="handleTransferToService"
+          />
 
-        <!-- 流式响应状态提示 -->
-        <div v-if="isReceivingStream" class="stream-status">
-          <el-icon class="is-loading">
-            <Loading/>
-          </el-icon>
-          <span>AI正在思考中...</span>
+          <div v-if="isReceivingStream" class="stream-status">
+            <el-icon class="is-loading">
+              <Loading/>
+            </el-icon>
+            <span>Agent 团队协作中...</span>
+          </div>
         </div>
+
+        <AgentRunPanel
+          :run="agentRun"
+          :events="agentEvents"
+          :action-loading="approvalLoading"
+          @approve="handleApproval(true)"
+          @reject="handleApproval(false)"
+        />
       </div>
     </main>
   </div>
@@ -475,6 +523,18 @@ onMounted(() => {
   overflow: auto;
 }
 
+.agent-workspace {
+  width: 100%;
+  max-width: 1260px;
+  min-height: 0;
+  height: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 1rem;
+}
+
 .stream-status {
   position: absolute;
   bottom: 1rem;
@@ -497,11 +557,24 @@ onMounted(() => {
 .chat-container {
   width: 100%;
   max-width: 900px;
-  margin: 0 auto;
+  min-width: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
+}
+
+@media (max-width: 1120px) {
+  .agent-workspace {
+    height: auto;
+    min-height: 100%;
+    flex-direction: column;
+  }
+
+  .chat-container {
+    min-height: 620px;
+    max-width: none;
+  }
 }
 
 .stream-status .el-icon {

@@ -1,0 +1,31 @@
+{
+  "measuredAt": "2026-09-04T12:13:28+0800",
+  "host": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+  "dockerMemoryBytes": 8321712128,
+  "instances": {
+    "gateway": 1,
+    "user": 2,
+    "ticket": 2,
+    "ai": 1
+  },
+  "workload": {
+    "concurrentUsers": 100,
+    "iterations": 100,
+    "initialSeats": 10
+  },
+  "results": {
+    "success": 10,
+    "httpStatusCounts": {
+      "200": 10,
+      "409": 60,
+      "503": 30
+    },
+    "wallSeconds": 0.821,
+    "throughputRequestsPerSecond": 121.88,
+    "p50Ms": 571.1,
+    "p95Ms": 801.47,
+    "maxMs": 811.25,
+    "finalSeats": 0,
+    "activeRegistrations": 10
+  }
+}

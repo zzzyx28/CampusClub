@@ -70,15 +70,13 @@ const timer = ref(null);
 
 // 发送验证码
 const sendCode = async () => {
-  // 先验证邮箱
-  const emailItem = formRef.value.validateField('email');
-  
   if (!registerForm.email) {
     ElMessage.warning('请先填写邮箱地址');
     return;
   }
   
   try {
+    await formRef.value.validateField('email');
     loading.value = true;
     
     // 调用发送验证码API

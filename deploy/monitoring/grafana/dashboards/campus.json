@@ -1,0 +1,138 @@
+{
+  "uid": "campus-cloud",
+  "title": "CampusClub services",
+  "schemaVersion": 40,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "HTTP requests / second",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "campus-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum by(application) (rate(http_server_requests_seconds_count[1m]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "HTTP P95 (seconds)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "campus-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by(le,application) (rate(http_server_requests_seconds_bucket[5m])))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Outbox pending",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "campus-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "campus_outbox_pending",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Outbox failures",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "campus-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum by(application) (rate(campus_outbox_failed_total[1m]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Notification failures",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "campus-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "rate(campus_notification_failed_total[1m])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "JVM memory",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "campus-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum by(application) (jvm_memory_used_bytes)",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      }
+    }
+  ],
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "refresh": "10s"
+}

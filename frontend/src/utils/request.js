@@ -1,9 +1,6 @@
 import axios from 'axios';
 
-const defaultBaseURL =
-  typeof window !== 'undefined'
-    ? `${window.location.protocol}//${window.location.hostname}:8080/api`
-    : 'http://127.0.0.1:8080/api';
+const defaultBaseURL = '/api';
 
 const service = axios.create({
   baseURL: import.meta.env.VITE_APP_BASE_API || defaultBaseURL,
@@ -73,12 +70,12 @@ export function get(url, params) {
   return service({ url, method: 'get', params });
 }
 
-export function post(url, data) {
-  return service({ url, method: 'post', data });
+export function post(url, data, config = {}) {
+  return service({ ...config, url, method: 'post', data });
 }
 
-export function put(url, data) {
-  return service({ url, method: 'put', data });
+export function put(url, data, config = {}) {
+  return service({ ...config, url, method: 'put', data });
 }
 
 export function del(url, data) {

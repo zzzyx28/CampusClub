@@ -1,68 +1,29 @@
-# CampusClub 数据文件
+# CampusClub 演示数据
 
-本目录集中存放数据库相关脚本。**表结构**由 Flyway 管理（`backend/src/main/resources/db/migration/`），**演示数据**在本目录的 `seed/` 下维护。
+微服务通过各自的 Flyway `db/demo` 迁移装载演示数据，使用 `demo` profile 时自动执行。旧单体脚本仍保存在 `data/seed/dev-data.sql`，只作为历史数据参考。
 
-## 目录结构
+| 数据所有者 | 表 | 演示内容 |
+|---|---|---|
+| User | `user`、`system_log` | 普通用户、社团助手和管理员 |
+| Ticket | `activity`、`ticket_tier`、`registration` | 4 场活动、票档和 3 条报名 |
+| AI | `conversation_index`、MongoDB | 4 条会话索引；新会话写入 MongoDB |
 
-```
-data/
-├── README.md           # 本说明
-├── seed/
-│   └── dev-data.sql    # 本地开发演示数据（幂等，可重复执行）
-└── scripts/
-    └── reset-dev.sql   # 清空演示数据（保留 admin 账号）
-```
+演示账号：
 
-## 自动灌数（推荐）
+| 角色 | 用户名 | 密码 |
+|---|---|---|
+| 系统管理员 | `admin` | `admin123` |
+| 普通用户 | `alice123` | `pass123` |
+| 普通用户 | `david_user` | `david2023` |
+| 普通用户 | `eva_user` | `eva321` |
+| 社团助手 | `charlie_cs` | `cs789` |
+| 管理员 | `bob_admin` | `admin456` |
 
-本地 `local` profile 且 `app.seed.dev-data=true`（默认开启）时，后端启动会自动执行 `seed/dev-data.sql`。
-
-关闭自动灌数：在 `application-local.yml` 中设置：
-
-```yaml
-app:
-  seed:
-    dev-data: false
-```
-
-## 演示账号
-
-| 角色 | 用户名 | 密码 | 说明 |
-|------|--------|------|------|
-| 系统管理员 | `admin` | `admin123` | 由 `AdminInitializer` 创建，不在 seed SQL 中 |
-| 普通用户 | `alice123` | `pass123` | |
-| 普通用户 | `david_user` | `david2023` | |
-| 普通用户 | `eva_user` | `eva321` | |
-| 社团助手 | `charlie_cs` | `cs789` | |
-| 管理员(演示) | `bob_admin` | `admin456` | user_type=3，可用于测试多管理员 |
-
-## 演示内容
-
-- **4 场活动**（讲座、辩论、志愿、音乐节）及对应票档
-- **8 条报名记录**
-- **4 条会话索引**
-
-## 手动重置并重新导入
+重建微服务数据不会触碰旧 `campusclub` 库：
 
 ```bash
-# 1. 清空演示数据（MySQL 容器示例）
-docker exec -i campusclub-mysql-1 mysql -uroot -proot campusclub < data/scripts/reset-dev.sql
-
-# 2. 重启后端，将自动重新执行 dev-data.sql
-cd backend && mvn spring-boot:run
+docker compose down -v
+./scripts/cloud-up.sh
 ```
 
-或手动导入种子：
-
-```bash
-mysql -uroot -p campusclub < data/seed/dev-data.sql
-```
-
-## 与 Flyway 的关系
-
-| 类型 | 位置 | 执行时机 |
-|------|------|----------|
-| 建表迁移 | `backend/src/main/resources/db/migration/V*.sql` | 每次启动，Flyway 自动 |
-| 演示数据 | `data/seed/dev-data.sql` | local profile 首次缺数据时 |
-
-> 遗留的 `schema.sql` / `data.sql` 已弃用，请勿再使用。
+表结构迁移位于每个服务的 `src/main/resources/db/migration`，演示迁移位于 `src/main/resources/db/demo`。`scripts/prepare_load_demo.sh` 单独准备带 `load_` 前缀的压测用户和 10 个名额，不应在生产环境运行。

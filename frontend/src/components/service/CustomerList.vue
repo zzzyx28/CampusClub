@@ -1,7 +1,7 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue';
 
-const props = defineProps({
+defineProps({
   customers: {
     type: Array,
     default: () => []
@@ -102,4 +102,4 @@ const selectCustomer = (customer) => {
 .unread-badge {
   margin-top: 2px;
 }
-</style> 
+</style>
